@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}{{ knowledge.title }} | Astrology Research ERP{% endblock %}
+{% block page_title %}{{ knowledge.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        <span class="badge text-bg-light border">{{ knowledge.get_system_display }}</span>
+        <span class="badge text-bg-light border">{{ knowledge.get_section_display }}</span>
+        <span class="badge text-bg-light border">{{ knowledge.get_status_display }}</span>
+        {% if knowledge.is_active %}
+            <span class="badge text-bg-success">Active</span>
+        {% else %}
+            <span class="badge text-bg-secondary">Inactive</span>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'knowledge:knowledge_list' %}">Back</a>
+        <a class="btn btn-primary" href="{% url 'knowledge:knowledge_update' knowledge.pk %}">Edit</a>
+        {% if knowledge.is_active %}
+            <a class="btn btn-outline-danger" href="{% url 'knowledge:knowledge_deactivate' knowledge.pk %}">Deactivate</a>
+        {% endif %}
+    </div>
+</div>
+
+<section class="page-card p-4">
+    <ul class="nav nav-tabs mb-4" id="research-detail-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details-pane" type="button" role="tab" aria-controls="details-pane" aria-selected="true">Details</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions-pane" type="button" role="tab" aria-controls="questions-pane" aria-selected="false">Questions</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="cases-tab" data-bs-toggle="tab" data-bs-target="#cases-pane" type="button" role="tab" aria-controls="cases-pane" aria-selected="false">Cases / Answers</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="statistics-tab" data-bs-toggle="tab" data-bs-target="#statistics-pane" type="button" role="tab" aria-controls="statistics-pane" aria-selected="false">Statistics</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="research-detail-tab-content">
+        <section class="tab-pane fade show active" id="details-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="text-muted small">System</div>
+                    <div>{{ knowledge.get_system_display }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Astrology Section</div>
+                    <div>{{ knowledge.get_section_display }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Rule Type</div>
+                    <div>{{ knowledge.get_knowledge_type_display }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Category / Topic</div>
+                    <a href="{% url 'knowledge:category_detail' knowledge.category.pk %}">{{ knowledge.category.category_name }}</a>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Life Areas</div>
+                    <div>{{ knowledge.life_areas|default:"-" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Research Status</div>
+                    <div>{{ knowledge.get_status_display }}</div>
+                </div>
+                <div class="col-12">
+                    <div class="text-muted small">Short Meaning</div>
+                    <div>{{ knowledge.short_meaning|default:"-" }}</div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="text-muted small">Description</div>
+                <div>{{ knowledge.description|linebreaksbr }}</div>
+            </div>
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <div class="text-muted small">Expected Result</div>
+                    <div>{{ knowledge.expected_result|linebreaksbr|default:"-" }}</div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="text-muted small">Legacy Verification Question</div>
+                    <div>{{ knowledge.verification_question|linebreaksbr|default:"-" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Nature</div>
+                    <div>{{ knowledge.get_nature_display }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Confidence Level</div>
+                    <div>{{ knowledge.get_confidence_level_display }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Active</div>
+                    <div>{% if knowledge.is_active %}Yes{% else %}No{% endif %}</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="questions-pane" role="tabpanel" aria-labelledby="questions-tab" tabindex="0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 mb-0">Research Questions</h2>
+                <a class="btn btn-sm btn-primary" href="{% url 'knowledge:hypothesis_question_create' knowledge.pk %}">Add Question</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Question</th>
+                            <th>Type</th>
+                            <th>Sort</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for question in questions %}
+                            <tr>
+                                <td>{{ question.question_text }}</td>
+                                <td>{{ question.get_question_type_display }}</td>
+                                <td>{{ question.sort_order }}</td>
+                                <td>{% if question.is_active %}Active{% else %}Inactive{% endif %}</td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-primary" href="{% url 'knowledge:hypothesis_question_update' question.pk %}">Edit</a>
+                                    {% if question.is_active %}
+                                        <a class="btn btn-sm btn-outline-danger" href="{% url 'knowledge:hypothesis_question_deactivate' question.pk %}">Deactivate</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td class="text-center text-muted py-3" colspan="5">No questions added yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="cases-pane" role="tabpanel" aria-labelledby="cases-tab" tabindex="0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Customer</th>
+                            <th>Question</th>
+                            <th>Answer</th>
+                            <th>Answered By</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for answer in answers %}
+                            <tr>
+                                <td><a href="{% url 'customers:customer_detail' answer.customer.pk %}">{{ answer.customer.customer_name }}</a></td>
+                                <td>{{ answer.question.question_text }}</td>
+                                <td>{{ answer.answer_text|default:answer.answer_value|default:"-" }}</td>
+                                <td>{{ answer.answered_by|default:"-" }}</td>
+                                <td>{{ answer.answered_date|date:"d M Y"|default:"-" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td class="text-center text-muted py-3" colspan="5">No customer answers recorded yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="statistics-pane" role="tabpanel" aria-labelledby="statistics-tab" tabindex="0">
+            <div class="row g-3">
+                <div class="col-12 col-md-4 col-xl-3">
+                    <div class="border rounded p-3">
+                        <div class="text-muted small">Customers Answered</div>
+                        <div class="fs-3 fw-semibold">{{ total_customers_answered }}</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 col-xl-3">
+                    <div class="border rounded p-3">
+                        <div class="text-muted small">Yes Count</div>
+                        <div class="fs-3 fw-semibold">{{ yes_count }}</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 col-xl-3">
+                    <div class="border rounded p-3">
+                        <div class="text-muted small">No Count</div>
+                        <div class="fs-3 fw-semibold">{{ no_count }}</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 col-xl-3">
+                    <div class="border rounded p-3">
+                        <div class="text-muted small">Average Rating</div>
+                        <div class="fs-3 fw-semibold">{{ average_rating|floatformat:1|default:"-" }}</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 col-xl-3">
+                    <div class="border rounded p-3">
+                        <div class="text-muted small">Final Applies</div>
+                        <div class="fs-3 fw-semibold">{{ final_applies_count }}</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 col-xl-3">
+                    <div class="border rounded p-3">
+                        <div class="text-muted small">Final Partial</div>
+                        <div class="fs-3 fw-semibold">{{ final_partial_count }}</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 col-xl-3">
+                    <div class="border rounded p-3">
+                        <div class="text-muted small">Does Not Apply</div>
+                        <div class="fs-3 fw-semibold">{{ final_does_not_apply_count }}</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Deactivate Category | Astrology Research ERP{% endblock %}
+{% block page_title %}Deactivate Category{% endblock %}
+
+{% block content %}
+<section class="page-card p-4">
+    <h2 class="h5 mb-2">Deactivate {{ category.category_name }}?</h2>
+    <p class="text-muted">
+        Existing research hypotheses stay intact, but this category will no longer appear as active.
+    </p>
+    <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <a class="btn btn-outline-secondary" href="{% url 'knowledge:category_detail' category.pk %}">Cancel</a>
+        <button class="btn btn-danger" type="submit">Deactivate</button>
+    </form>
+</section>
+{% endblock %}

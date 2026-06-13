@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config.config_name }} | Astrology Research ERP{% endblock %}
+{% block page_title %}{{ config.config_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        <span class="badge text-bg-light border">{{ config.config_type }}</span>
+        {% if config.is_active %}
+            <span class="badge text-bg-success">Active</span>
+        {% else %}
+            <span class="badge text-bg-secondary">Inactive</span>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'core:config_list' %}">Back</a>
+        <a class="btn btn-primary" href="{% url 'core:config_update' config.pk %}">Edit</a>
+        {% if config.is_active %}
+            <a class="btn btn-outline-danger" href="{% url 'core:config_deactivate' config.pk %}">Deactivate</a>
+        {% endif %}
+    </div>
+</div>
+
+<section class="page-card p-4">
+    <ul class="nav nav-tabs mb-4" id="config-detail-tabs" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="detail-basic-tab" data-bs-toggle="tab" data-bs-target="#detail-basic-pane" type="button" role="tab">Basic</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="detail-api-tab" data-bs-toggle="tab" data-bs-target="#detail-api-pane" type="button" role="tab">API</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="detail-email-tab" data-bs-toggle="tab" data-bs-target="#detail-email-pane" type="button" role="tab">Email</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="detail-audit-tab" data-bs-toggle="tab" data-bs-target="#detail-audit-pane" type="button" role="tab">Audit</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <section class="tab-pane fade show active" id="detail-basic-pane" role="tabpanel" tabindex="0">
+            <div class="row g-3">
+                <div class="col-md-4"><div class="text-muted small">Type</div><div>{{ config.config_type }}</div></div>
+                <div class="col-md-4"><div class="text-muted small">Provider</div><div>{{ config.provider_name|default:"-" }}</div></div>
+                <div class="col-md-4"><div class="text-muted small">Status</div><div>{% if config.is_active %}Active{% else %}Inactive{% endif %}</div></div>
+                <div class="col-12"><div class="text-muted small">Notes</div><div>{{ config.notes|linebreaksbr|default:"-" }}</div></div>
+            </div>
+        </section>
+        <section class="tab-pane fade" id="detail-api-pane" role="tabpanel" tabindex="0">
+            <div class="row g-3">
+                <div class="col-12"><div class="text-muted small">API URL</div><div>{{ config.api_url|default:"-" }}</div></div>
+                <div class="col-md-6"><div class="text-muted small">API Key</div><div>{{ config.masked_api_key }}</div></div>
+                <div class="col-md-6"><div class="text-muted small">API Secret</div><div>{{ config.masked_api_secret }}</div></div>
+            </div>
+        </section>
+        <section class="tab-pane fade" id="detail-email-pane" role="tabpanel" tabindex="0">
+            <div class="row g-3">
+                <div class="col-md-6"><div class="text-muted small">Sender Email</div><div>{{ config.sender_email|default:"-" }}</div></div>
+                <div class="col-md-6"><div class="text-muted small">SMTP Host</div><div>{{ config.smtp_host|default:"-" }}</div></div>
+                <div class="col-md-4"><div class="text-muted small">SMTP Port</div><div>{{ config.smtp_port|default:"-" }}</div></div>
+                <div class="col-md-4"><div class="text-muted small">Username</div><div>{{ config.username|default:"-" }}</div></div>
+                <div class="col-md-4"><div class="text-muted small">Password</div><div>{{ config.masked_password }}</div></div>
+            </div>
+        </section>
+        <section class="tab-pane fade" id="detail-audit-pane" role="tabpanel" tabindex="0">
+            <div class="row g-3">
+                <div class="col-md-6"><div class="text-muted small">Created By</div><div>{{ config.created_by|default:"-" }}</div></div>
+                <div class="col-md-6"><div class="text-muted small">Updated By</div><div>{{ config.updated_by|default:"-" }}</div></div>
+                <div class="col-md-6"><div class="text-muted small">Created</div><div>{{ config.created_at|date:"d M Y H:i" }}</div></div>
+                <div class="col-md-6"><div class="text-muted small">Updated</div><div>{{ config.updated_at|date:"d M Y H:i" }}</div></div>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

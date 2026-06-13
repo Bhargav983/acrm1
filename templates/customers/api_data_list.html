@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Astrology Data | Astrology Research ERP{% endblock %}
+{% block page_title %}Astrology Data{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        <p class="text-muted mb-0">Store manual, API, Excel, CSV, and software astrology data independently from customer details.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'customers:api_data_create' %}">Add Astrology Data</a>
+</div>
+
+<section class="page-card p-3 mb-3">
+    <form class="row g-2 align-items-end" method="get">
+        <div class="col-12 col-lg-5">
+            <label class="form-label" for="api-data-search">Search</label>
+            <input class="form-control" id="api-data-search" type="search" name="q" value="{{ search_query }}" placeholder="Customer, nakshatra, pada, signs, dasha">
+        </div>
+        <div class="col-12 col-md-4 col-lg-3">
+            <label class="form-label" for="source-filter">Source</label>
+            <select class="form-select" id="source-filter" name="source">
+                <option value="">All Sources</option>
+                {% for value, label in data_source_choices %}
+                    <option value="{{ value }}" {% if source_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-4 col-lg-2">
+            <label class="form-label" for="status-filter">Status</label>
+            <select class="form-select" id="status-filter" name="status">
+                <option value="active" {% if status_filter == "active" %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == "inactive" %}selected{% endif %}>Inactive</option>
+                <option value="all" {% if status_filter == "all" %}selected{% endif %}>All</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-4 col-lg-2 d-grid">
+            <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        </div>
+    </form>
+</section>
+
+<section class="page-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Customer</th>
+                    <th>Source</th>
+                    <th>Type</th>
+                    <th>Lagna</th>
+                    <th>Moon Sign</th>
+                    <th>Nakshatra</th>
+                    <th>Pada</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in api_records %}
+                    <tr>
+                        <td>
+                            <a class="fw-semibold text-decoration-none" href="{% url 'customers:api_data_detail' record.pk %}">
+                                {{ record.customer.customer_name }}
+                            </a>
+                        </td>
+                        <td>{{ record.get_data_source_display }}</td>
+                        <td>{{ record.get_api_type_display }}</td>
+                        <td>{{ record.lagna|default:"-" }}</td>
+                        <td>{{ record.moon_sign|default:"-" }}</td>
+                        <td>{{ record.nakshatra|default:"-" }}</td>
+                        <td>{{ record.pada|default:"-" }}</td>
+                        <td>
+                            {% if record.is_active %}
+                                <span class="badge text-bg-success">Active</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" href="{% url 'customers:api_data_detail' record.pk %}">View</a>
+                            <a class="btn btn-sm btn-outline-primary" href="{% url 'customers:api_data_update' record.pk %}">Edit</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td class="text-center text-muted py-4" colspan="9">No astrology data records found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

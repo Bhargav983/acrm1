@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Research Library | Astrology Research ERP{% endblock %}
+{% block page_title %}Research Library{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        <p class="text-muted mb-0">Manage research hypotheses, interview questions, and real customer evidence in one library.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <div class="btn-group" role="group" aria-label="Research Library view">
+            <a class="btn btn-outline-secondary {% if view_mode == 'list' %}active{% endif %}" href="?{{ list_view_query }}">List View</a>
+            <a class="btn btn-outline-secondary {% if view_mode == 'tabs' %}active{% endif %}" href="?{{ tabs_view_query }}">Tabs View</a>
+        </div>
+        <a class="btn btn-outline-secondary" href="{% url 'knowledge:category_list' %}">Categories</a>
+        <a class="btn btn-primary" href="{% url 'knowledge:knowledge_create' %}">Add Hypothesis</a>
+    </div>
+</div>
+
+<section class="page-card p-3 mb-3">
+    <form class="row g-2 align-items-end" method="get">
+        <input type="hidden" name="view" value="{{ view_mode }}">
+        <div class="col-12 col-xl-3">
+            <label class="form-label" for="knowledge-search">Search</label>
+            <input class="form-control" id="knowledge-search" type="search" name="q" value="{{ search_query }}" placeholder="Title, meaning, life area">
+        </div>
+        <div class="col-12 col-md-6 col-xl-2">
+            <label class="form-label" for="system-filter">System</label>
+            <select class="form-select" id="system-filter" name="system">
+                <option value="">All Systems</option>
+                {% for value, label in system_choices %}
+                    <option value="{{ value }}" {% if system_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-2">
+            <label class="form-label" for="section-filter">Section</label>
+            <select class="form-select" id="section-filter" name="section">
+                <option value="">All Sections</option>
+                {% for value, label in section_choices %}
+                    <option value="{{ value }}" {% if section_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-2">
+            <label class="form-label" for="type-filter">Rule Type</label>
+            <select class="form-select" id="type-filter" name="type">
+                <option value="">All Rule Types</option>
+                {% for value, label in knowledge_type_choices %}
+                    <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-2">
+            <label class="form-label" for="hypothesis-status-filter">Research Status</label>
+            <select class="form-select" id="hypothesis-status-filter" name="hypothesis_status">
+                <option value="">All Statuses</option>
+                {% for value, label in hypothesis_status_choices %}
+                    <option value="{{ value }}" {% if hypothesis_status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-xl-1 d-grid">
+            <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        </div>
+    </form>
+</section>
+
+{% if view_mode == 'tabs' %}
+    <section class="page-card p-3">
+        <ul class="nav nav-tabs mb-3" id="research-system-tabs" role="tablist">
+            {% for system in tab_groups %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if forloop.first %}active{% endif %}" id="system-{{ system.value }}-tab" data-bs-toggle="tab" data-bs-target="#system-{{ system.value }}-pane" type="button" role="tab">
+                        {{ system.label }}
+                        <span class="badge text-bg-light border ms-1">{{ system.count }}</span>
+                    </button>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <div class="tab-content">
+            {% for system in tab_groups %}
+                <section class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="system-{{ system.value }}-pane" role="tabpanel" tabindex="0">
+                    <ul class="nav nav-pills gap-2 mb-3" id="section-tabs-{{ system.value }}" role="tablist">
+                        {% for section in system.sections %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link {% if forloop.first %}active{% endif %}" id="section-{{ system.value }}-{{ section.value }}-tab" data-bs-toggle="pill" data-bs-target="#section-{{ system.value }}-{{ section.value }}-pane" type="button" role="tab">
+                                    {{ section.label }}
+                                    <span class="badge text-bg-light border ms-1">{{ section.count }}</span>
+                                </button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="tab-content">
+                        {% for section in system.sections %}
+                            <section class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="section-{{ system.value }}-{{ section.value }}-pane" role="tabpanel" tabindex="0">
+                                {% if section.records %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Rule Summary / Title</th>
+                                                    <th>Life Areas</th>
+                                                    <th>Questions</th>
+                                                    <th>Status</th>
+                                                    <th>Confidence</th>
+                                                    <th class="text-end">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in section.records %}
+                                                    <tr>
+                                                        <td>
+                                                            <a class="fw-semibold text-decoration-none" href="{% url 'knowledge:knowledge_detail' item.pk %}">
+                                                                {{ item.title }}
+                                                            </a>
+                                                            {% if item.short_meaning %}
+                                                                <div class="text-muted small">{{ item.short_meaning }}</div>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ item.life_areas|default:"-" }}</td>
+                                                        <td>{{ item.questions_count }}</td>
+                                                        <td>
+                                                            <span class="badge text-bg-light border">{{ item.get_status_display }}</span>
+                                                            {% if not item.is_active %}
+                                                                <span class="badge text-bg-secondary">Inactive</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ item.confidence_level }}/10</td>
+                                                        <td class="text-end">
+                                                            <a class="btn btn-sm btn-outline-secondary" href="{% url 'knowledge:knowledge_detail' item.pk %}">View</a>
+                                                            <a class="btn btn-sm btn-outline-primary" href="{% url 'knowledge:knowledge_update' item.pk %}">Edit</a>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <div class="text-center text-muted py-4 border rounded bg-light">
+                                        No research hypotheses found for {{ system.label }} / {{ section.label }}.
+                                    </div>
+                                {% endif %}
+                            </section>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endfor %}
+        </div>
+    </section>
+{% else %}
+    <section class="page-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>System</th>
+                        <th>Section</th>
+                        <th>Title</th>
+                        <th>Life Areas</th>
+                        <th>Questions</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in knowledge_records %}
+                        <tr>
+                            <td>{{ item.get_system_display }}</td>
+                            <td>{{ item.get_section_display }}</td>
+                            <td>
+                                <a class="fw-semibold text-decoration-none" href="{% url 'knowledge:knowledge_detail' item.pk %}">
+                                    {{ item.title }}
+                                </a>
+                                {% if item.short_meaning %}
+                                    <div class="text-muted small">{{ item.short_meaning }}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.life_areas|default:"-" }}</td>
+                            <td>{{ item.questions_count }}</td>
+                            <td>
+                                <span class="badge text-bg-light border">{{ item.get_status_display }}</span>
+                                {% if not item.is_active %}
+                                    <span class="badge text-bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-secondary" href="{% url 'knowledge:knowledge_detail' item.pk %}">View</a>
+                                <a class="btn btn-sm btn-outline-primary" href="{% url 'knowledge:knowledge_update' item.pk %}">Edit</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td class="text-center text-muted py-4" colspan="7">No research hypotheses found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endif %}
+{% endblock %}

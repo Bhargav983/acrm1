@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | Astrology Research ERP{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        <p class="text-muted mb-0">Maintain reusable dropdown values used across customers, consultations, knowledge, and tracking.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'core:settings_create' %}">Add Setting</a>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'core:settings_list' %}">Setting Options</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'core:config_list' %}">Configurations</a>
+    </li>
+</ul>
+
+<section class="page-card p-3 mb-3">
+    <form class="row g-2 align-items-end" method="get">
+        <div class="col-12 col-lg-4">
+            <label class="form-label" for="setting-search">Search</label>
+            <input class="form-control" id="setting-search" type="search" name="q" value="{{ search_query }}" placeholder="Name">
+        </div>
+        <div class="col-12 col-md-4 col-lg-3">
+            <label class="form-label" for="setting-type-filter">Setting Type</label>
+            <select class="form-select" id="setting-type-filter" name="setting_type">
+                <option value="">All Types</option>
+                {% for value, label in setting_type_choices %}
+                    <option value="{{ value }}" {% if setting_type_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-4 col-lg-3">
+            <label class="form-label" for="status-filter">Status</label>
+            <select class="form-select" id="status-filter" name="status">
+                <option value="active" {% if status_filter == "active" %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == "inactive" %}selected{% endif %}>Inactive</option>
+                <option value="all" {% if status_filter == "all" %}selected{% endif %}>All</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-4 col-lg-2 d-grid">
+            <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        </div>
+    </form>
+</section>
+
+<section class="page-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Sort</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for setting in settings %}
+                    <tr>
+                        <td>{{ setting.setting_type }}</td>
+                        <td><a class="fw-semibold text-decoration-none" href="{% url 'core:settings_detail' setting.pk %}">{{ setting.name }}</a></td>
+                        <td>{{ setting.description|default:"-" }}</td>
+                        <td>{{ setting.sort_order }}</td>
+                        <td>
+                            {% if setting.is_active %}
+                                <span class="badge text-bg-success">Active</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" href="{% url 'core:settings_detail' setting.pk %}">View</a>
+                            <a class="btn btn-sm btn-outline-primary" href="{% url 'core:settings_update' setting.pk %}">Edit</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td class="text-center text-muted py-4" colspan="6">No settings found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

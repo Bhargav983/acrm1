@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Astrology Data | Astrology Research ERP{% endblock %}
+{% block page_title %}Astrology Data{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        <h2 class="h5 mb-1">{{ api_data.customer.customer_name }}</h2>
+        <p class="text-muted mb-0">{{ api_data.get_data_source_display }} record from {{ api_data.request_date|date:"d M Y H:i" }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'customers:api_data_list' %}">Back</a>
+        <a class="btn btn-primary" href="{% url 'customers:api_data_update' api_data.pk %}">Edit</a>
+        {% if api_data.is_active %}
+            <a class="btn btn-outline-danger" href="{% url 'customers:api_data_deactivate' api_data.pk %}">Deactivate</a>
+        {% endif %}
+    </div>
+</div>
+
+<section class="page-card p-4">
+    <ul class="nav nav-tabs mb-4" id="api-data-detail-tabs" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="detail-summary-tab" data-bs-toggle="tab" data-bs-target="#detail-summary-pane" type="button" role="tab">Astrology Values</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="detail-record-tab" data-bs-toggle="tab" data-bs-target="#detail-record-pane" type="button" role="tab">Record Details</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="detail-notes-tab" data-bs-toggle="tab" data-bs-target="#detail-notes-pane" type="button" role="tab">Notes</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <section class="tab-pane fade show active" id="detail-summary-pane" role="tabpanel" tabindex="0">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="text-muted small">Lagna</div>
+                    <div>{{ api_data.lagna|default:"-" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Moon Sign</div>
+                    <div>{{ api_data.moon_sign|default:"-" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Sun Sign</div>
+                    <div>{{ api_data.sun_sign|default:"-" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Nakshatra</div>
+                    <div>{{ api_data.nakshatra|default:"-" }}</div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-muted small">Pada</div>
+                    <div>{{ api_data.pada|default:"-" }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Mahadasha</div>
+                    <div>{{ api_data.current_mahadasha|default:"-" }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Antardasha</div>
+                    <div>{{ api_data.current_antardasha|default:"-" }}</div>
+                </div>
+            </div>
+            {% if has_planet_sign_rows or has_planet_house_rows or has_planet_nakshatra_rows or has_house_lord_rows %}
+                <hr class="my-4">
+            {% endif %}
+            {% if has_planet_sign_rows %}
+                <h3 class="h6 mb-2">Planet in Sign</h3>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Planet</th>
+                                <th>Sign</th>
+                                <th>Sign Lord</th>
+                                <th>Relationship</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in planet_sign_rows %}
+                                <tr>
+                                    <td class="fw-semibold">{{ row.planet }}</td>
+                                    <td>{{ row.sign|default:"-" }}</td>
+                                    <td>{{ row.lord|default:"-" }}</td>
+                                    <td>{{ row.relationship|default:"-" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+            {% if has_planet_house_rows %}
+                <h3 class="h6 mb-2">Planet in House</h3>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Planet</th>
+                                <th>House</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in planet_house_rows %}
+                                <tr>
+                                    <td class="fw-semibold">{{ row.planet }}</td>
+                                    <td>{{ row.house|default:"-" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+            {% if has_planet_nakshatra_rows %}
+                <h3 class="h6 mb-2">Planet in Nakshatra</h3>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Planet</th>
+                                <th>Nakshatra</th>
+                                <th>Pada</th>
+                                <th>Owner</th>
+                                <th>Relationship</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in planet_nakshatra_rows %}
+                                <tr>
+                                    <td class="fw-semibold">{{ row.planet }}</td>
+                                    <td>{{ row.nakshatra|default:"-" }}</td>
+                                    <td>{{ row.pada|default:"-" }}</td>
+                                    <td>{{ row.owner|default:"-" }}</td>
+                                    <td>{{ row.relationship|default:"-" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+            {% if has_house_lord_rows %}
+                <h3 class="h6 mb-2">House Lord in House</h3>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>House</th>
+                                <th>Sign</th>
+                                <th>Lord</th>
+                                <th>Goes To House</th>
+                                <th>Destination Sign</th>
+                                <th>Relationship</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in house_lord_rows %}
+                                <tr>
+                                    <td class="fw-semibold">{{ row.house }}</td>
+                                    <td>{{ row.source_sign|default:"-" }}</td>
+                                    <td>{{ row.lord_planet|default:"-" }}</td>
+                                    <td>{{ row.destination_house|default:"-" }}</td>
+                                    <td>{{ row.destination_sign|default:"-" }}</td>
+                                    <td>{{ row.relationship|default:"-" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="tab-pane fade" id="detail-record-pane" role="tabpanel" tabindex="0">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="text-muted small">Customer</div>
+                    <a href="{% url 'customers:customer_detail' api_data.customer.pk %}">{{ api_data.customer.customer_name }}</a>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Data Source</div>
+                    <div>{{ api_data.get_data_source_display }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Request Date</div>
+                    <div>{{ api_data.request_date|date:"d M Y H:i" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Status</div>
+                    {% if api_data.is_active %}
+                        <span class="badge text-bg-success">Active</span>
+                    {% else %}
+                        <span class="badge text-bg-secondary">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="detail-notes-pane" role="tabpanel" tabindex="0">
+            <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-start">
+                <div>
+                    <div class="text-muted small mb-1">Notes</div>
+                    {% if api_data.notes %}
+                        <div>{{ api_data.notes|linebreaksbr }}</div>
+                    {% else %}
+                        <p class="text-muted mb-0">No notes recorded yet. Add notes when editing this astrology data record.</p>
+                    {% endif %}
+                </div>
+                <a class="btn btn-outline-primary" href="{% url 'customers:api_data_update' api_data.pk %}">Edit Notes</a>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

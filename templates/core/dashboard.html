@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Astrology Research ERP{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        <a href="{% url 'customers:customer_list' %}" class="page-card p-3 text-decoration-none text-reset d-block h-100">
+            <div class="text-muted small">Total Customers</div>
+            <div class="fs-3 fw-semibold">{{ total_customers }}</div>
+        </a>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <a href="{% url 'knowledge:knowledge_list' %}" class="page-card p-3 text-decoration-none text-reset d-block h-100">
+            <div class="text-muted small">Research Hypotheses</div>
+            <div class="fs-3 fw-semibold">{{ total_knowledge_records }}</div>
+        </a>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <a href="{% url 'knowledge:tracking_list' %}" class="page-card p-3 text-decoration-none text-reset d-block h-100">
+            <div class="text-muted small">Research Tracking</div>
+            <div class="fs-3 fw-semibold">{{ total_verifications }}</div>
+        </a>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <a href="{% url 'knowledge:tracking_list' %}?tracking_type=remedy_tracking" class="page-card p-3 text-decoration-none text-reset d-block h-100">
+            <div class="text-muted small">Active Remedies</div>
+            <div class="fs-3 fw-semibold">{{ active_remedies }}</div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        <a href="{% url 'consultations:consultation_list' %}?follow_up=yes&date={{ today|date:'Y-m-d' }}" class="page-card p-3 text-decoration-none text-reset d-block h-100">
+            <div class="text-muted small">Today's Follow Ups</div>
+            <div class="fs-3 fw-semibold">{{ todays_followups }}</div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
+        <section class="page-card p-4 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h5 mb-0">Recent Customers</h2>
+                <a href="{% url 'customers:customer_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            {% if recent_customers %}
+                <div class="list-group list-group-flush">
+                    {% for customer in recent_customers %}
+                        <a href="{% url 'customers:customer_detail' customer.pk %}" class="list-group-item list-group-item-action px-0">
+                            <div class="fw-semibold">{{ customer.customer_name }}</div>
+                            <div class="small text-muted">{{ customer.mobile_number|default:"No mobile number" }}</div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">No customers added yet.</p>
+            {% endif %}
+        </section>
+    </div>
+    <div class="col-12 col-lg-6">
+        <section class="page-card p-4 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h5 mb-0">Recent Consultations</h2>
+                <a href="{% url 'consultations:consultation_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            {% if recent_consultations %}
+                <div class="list-group list-group-flush">
+                    {% for consultation in recent_consultations %}
+                        <a href="{% url 'consultations:consultation_detail' consultation.pk %}" class="list-group-item list-group-item-action px-0">
+                            <div class="fw-semibold">{{ consultation.customer.customer_name }}</div>
+                            <div class="small text-muted">{{ consultation.topic|default:"Consultation" }} - {{ consultation.consultation_date|date:"d M Y" }}</div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">No consultations added yet.</p>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}

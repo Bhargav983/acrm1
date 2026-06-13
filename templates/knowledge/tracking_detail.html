@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Research Summary Detail | Astrology Research ERP{% endblock %}
+{% block page_title %}Research Summary Detail{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        <span class="badge text-bg-light border">{{ tracking.get_tracking_type_display }}</span>
+        <span class="badge text-bg-light border">{{ tracking.get_status_display }}</span>
+        {% if tracking.is_active %}
+            <span class="badge text-bg-success">Active</span>
+        {% else %}
+            <span class="badge text-bg-secondary">Inactive</span>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'knowledge:tracking_list' %}">Back</a>
+        <a class="btn btn-primary" href="{% url 'knowledge:tracking_update' tracking.pk %}">Edit</a>
+        {% if tracking.is_active %}
+            <a class="btn btn-outline-danger" href="{% url 'knowledge:tracking_deactivate' tracking.pk %}">Deactivate</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-xl-8">
+        <section class="page-card p-4 mb-3">
+            <h2 class="h5 mb-3">Customer Information</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-muted small">Customer</div>
+                    <a href="{% url 'customers:customer_detail' tracking.customer.pk %}">{{ tracking.customer.customer_name }}</a>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Mobile</div>
+                    <div>{{ tracking.customer.mobile_number|default:"-" }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Email</div>
+                    <div>{{ tracking.customer.email|default:"-" }}</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="page-card p-4 mb-3">
+            <h2 class="h5 mb-3">Research Hypothesis</h2>
+            <div class="mb-3">
+                <div class="text-muted small">Hypothesis</div>
+                <a href="{% url 'knowledge:knowledge_detail' tracking.knowledge.pk %}">{{ tracking.knowledge.title }}</a>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="text-muted small">Category</div>
+                    <div>{{ tracking.knowledge.category.category_name }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Section</div>
+                    <div>{{ tracking.knowledge.get_section_display }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Type</div>
+                    <div>{{ tracking.knowledge.get_knowledge_type_display }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Related Factor</div>
+                    <div>{{ tracking.knowledge.related_factor|default:"-" }}</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="page-card p-4">
+            <h2 class="h5 mb-3">Feedback and Notes</h2>
+            <div class="row g-3">
+                <div class="col-12 col-xl-6">
+                    <div class="text-muted small">Customer Feedback</div>
+                    <div>{{ tracking.customer_feedback|linebreaksbr|default:"-" }}</div>
+                </div>
+                <div class="col-12 col-xl-6">
+                    <div class="text-muted small">Researcher Notes</div>
+                    <div>{{ tracking.researcher_notes|linebreaksbr|default:"-" }}</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="col-12 col-xl-4">
+        <section class="page-card p-4 mb-3">
+            <h2 class="h5 mb-3">Research Summary</h2>
+            <div class="mb-2">
+                <div class="text-muted small">Tracking Type</div>
+                <div>{{ tracking.get_tracking_type_display }}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-muted small">Status</div>
+                <div>{{ tracking.get_status_display }}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-muted small">Start / End</div>
+                <div>{{ tracking.start_date|date:"d M Y"|default:"-" }} / {{ tracking.end_date|date:"d M Y"|default:"-" }}</div>
+            </div>
+            <div>
+                <div class="text-muted small">Follow Up Date</div>
+                <div>{{ tracking.follow_up_date|date:"d M Y"|default:"-" }}</div>
+            </div>
+        </section>
+
+        <section class="page-card p-4 mb-3">
+            <h2 class="h5 mb-3">Outcome</h2>
+            <div class="mb-2">
+                <div class="text-muted small">Outcome</div>
+                <div>{{ tracking.get_outcome_display|default:"-" }}</div>
+            </div>
+            <div>
+                <div class="text-muted small">Effectiveness Rating</div>
+                <div>{{ tracking.effectiveness_rating|default:"-" }}</div>
+            </div>
+        </section>
+
+        <section class="page-card p-4">
+            <h2 class="h5 mb-3">Audit Information</h2>
+            <div class="mb-2">
+                <div class="text-muted small">Verified By</div>
+                <div>{{ tracking.verified_by|default:"-" }}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-muted small">Verified Date</div>
+                <div>{{ tracking.verified_date|date:"d M Y"|default:"-" }}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-muted small">Created</div>
+                <div>{{ tracking.created_at|date:"d M Y H:i" }}</div>
+            </div>
+            <div>
+                <div class="text-muted small">Updated</div>
+                <div>{{ tracking.updated_at|date:"d M Y H:i" }}</div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

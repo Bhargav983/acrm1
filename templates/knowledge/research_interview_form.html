@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Research Interview | Astrology Research ERP{% endblock %}
+{% block page_title %}Research Interview{% endblock %}
+
+{% block content %}
+<form method="post" class="page-card p-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-start mb-4">
+        <div>
+            <h2 class="h5 mb-1">{{ customer.customer_name }}</h2>
+            <p class="text-muted mb-0">{{ hypothesis.title }}</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="{% url 'customers:customer_detail' customer.pk %}">Back</a>
+    </div>
+
+    {% if questions %}
+        <div class="mb-4">
+            {% for question, answer_field, notes_field in question_fields %}
+                <section class="border rounded p-3 mb-3">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ answer_field.id_for_label }}">{{ forloop.counter }}. {{ question.question_text }}</label>
+                        {{ answer_field }}
+                        {{ answer_field.errors }}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ notes_field.id_for_label }}">Notes</label>
+                        {{ notes_field }}
+                        {{ notes_field.errors }}
+                    </div>
+                </section>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-warning">This hypothesis has no active questions yet.</div>
+    {% endif %}
+
+    <section class="border-top pt-3">
+        <h2 class="h6 mb-3">Final Result</h2>
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="{{ form.final_status.id_for_label }}">Final Result</label>
+                {{ form.final_status }}
+                {{ form.final_status.errors }}
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="{{ form.verified_date.id_for_label }}">Verified Date</label>
+                {{ form.verified_date }}
+                {{ form.verified_date.errors }}
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="{{ form.researcher_notes.id_for_label }}">Researcher Notes</label>
+                {{ form.researcher_notes }}
+                {{ form.researcher_notes.errors }}
+            </div>
+        </div>
+    </section>
+
+    <div class="d-flex gap-2 justify-content-end border-top pt-3">
+        <a class="btn btn-outline-secondary" href="{% url 'customers:customer_detail' customer.pk %}">Cancel</a>
+        <button class="btn btn-primary" type="submit">Save Interview</button>
+    </div>
+</form>
+{% endblock %}

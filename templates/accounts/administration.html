@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Administration | Astrology Research ERP{% endblock %}
+{% block page_title %}Administration{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
+        <section class="page-card p-4 h-100">
+            <h2 class="h5 mb-2">Roles</h2>
+            <p class="text-muted">Manage access roles and basic permission flags for the CRM.</p>
+            <div class="d-flex gap-2">
+                <a class="btn btn-primary" href="{% url 'accounts:role_list' %}">Open Roles</a>
+                <a class="btn btn-outline-secondary" href="{% url 'accounts:role_create' %}">Add Role</a>
+            </div>
+        </section>
+    </div>
+    <div class="col-12 col-lg-6">
+        <section class="page-card p-4 h-100">
+            <h2 class="h5 mb-2">Users</h2>
+            <p class="text-muted">Create users, assign roles, and activate or deactivate access.</p>
+            <div class="d-flex gap-2">
+                <a class="btn btn-primary" href="{% url 'accounts:user_list' %}">Open Users</a>
+                <a class="btn btn-outline-secondary" href="{% url 'accounts:user_create' %}">Add User</a>
+            </div>
+        </section>
+    </div>
+    <div class="col-12 col-lg-6">
+        <section class="page-card p-4 h-100">
+            <h2 class="h5 mb-2">Settings</h2>
+            <p class="text-muted">Maintain reusable dropdown values for customers, consultations, knowledge, and tracking.</p>
+            <div class="d-flex gap-2">
+                <a class="btn btn-primary" href="{% url 'core:settings_list' %}">Open Settings</a>
+                <a class="btn btn-outline-secondary" href="{% url 'core:settings_create' %}">Add Setting</a>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

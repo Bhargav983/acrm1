@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | Astrology Research ERP{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<form method="post" class="page-card p-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="h5 mb-1">User Management</h2>
+            <p class="text-muted mb-0">Passwords are stored through Django authentication, never as plain text.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="{% url 'accounts:user_list' %}">Back</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6">
+            <label class="form-label" for="{{ form.full_name.id_for_label }}">Full Name</label>
+            {{ form.full_name }}
+            {{ form.full_name.errors }}
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}
+            {{ form.username.errors }}
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
+            {{ form.email }}
+            {{ form.email.errors }}
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label" for="{{ form.mobile_number.id_for_label }}">Mobile Number</label>
+            {{ form.mobile_number }}
+            {{ form.mobile_number.errors }}
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label" for="{{ form.role.id_for_label }}">Role</label>
+            {{ form.role }}
+            {{ form.role.errors }}
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label" for="{{ form.password.id_for_label }}">Password</label>
+            {{ form.password }}
+            {% if is_edit %}<div class="form-text">Leave blank to keep the existing password.</div>{% endif %}
+            {{ form.password.errors }}
+        </div>
+        <div class="col-12">
+            <div class="form-check">
+                {{ form.is_active }}
+                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                {{ form.is_active.errors }}
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end">
+        <a class="btn btn-outline-secondary" href="{% url 'accounts:user_list' %}">Cancel</a>
+        <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+    </div>
+</form>
+{% endblock %}

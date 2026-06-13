@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Customers | Astrology Research ERP{% endblock %}
+{% block page_title %}Customers{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        <p class="text-muted mb-0">Manage customer master records, birth details, and research context.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'customers:customer_create' %}">Add Customer</a>
+</div>
+
+<section class="page-card p-3 mb-3">
+    <form class="row g-2 align-items-end" method="get">
+        <div class="col-12 col-md-7">
+            <label class="form-label" for="customer-search">Search</label>
+            <input class="form-control" id="customer-search" type="search" name="q" value="{{ search_query }}" placeholder="Name, mobile, email, nakshatra, occupation">
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label" for="status-filter">Status</label>
+            <select class="form-select" id="status-filter" name="status">
+                <option value="active" {% if status_filter == "active" %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == "inactive" %}selected{% endif %}>Inactive</option>
+                <option value="all" {% if status_filter == "all" %}selected{% endif %}>All</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-grid">
+            <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        </div>
+    </form>
+</section>
+
+<section class="page-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Mobile</th>
+                    <th>Email</th>
+                    <th>Birth Place</th>
+                    <th>Occupation</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                    <tr>
+                        <td>
+                            <a class="fw-semibold text-decoration-none" href="{% url 'customers:customer_detail' customer.pk %}">
+                                {{ customer.customer_name }}
+                            </a>
+                        </td>
+                        <td>{{ customer.mobile_number|default:"-" }}</td>
+                        <td>{{ customer.email|default:"-" }}</td>
+                        <td>{{ customer.place_of_birth|default:"-" }}</td>
+                        <td>{{ customer.occupation|default:"-" }}</td>
+                        <td>
+                            {% if customer.is_active %}
+                                <span class="badge text-bg-success">Active</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" href="{% url 'customers:customer_detail' customer.pk %}">View</a>
+                            <a class="btn btn-sm btn-outline-primary" href="{% url 'customers:customer_update' customer.pk %}">Edit</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td class="text-center text-muted py-4" colspan="7">No customers found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

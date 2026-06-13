@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | Astrology Research ERP{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<form method="post" class="page-card p-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-start mb-4">
+        <div>
+            <h2 class="h5 mb-1">Consultation Note</h2>
+            <p class="text-muted mb-0">Record consultation topic, notes, and follow-up requirements.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="{% url 'consultations:consultation_list' %}">Back</a>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="consultation-form-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="consultation-tab" data-bs-toggle="tab" data-bs-target="#consultation-pane" type="button" role="tab" aria-controls="consultation-pane" aria-selected="true">Consultation</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes-pane" type="button" role="tab" aria-controls="notes-pane" aria-selected="false">Notes</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="followup-tab" data-bs-toggle="tab" data-bs-target="#followup-pane" type="button" role="tab" aria-controls="followup-pane" aria-selected="false">Follow-up</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="consultation-form-tab-content">
+        <section class="tab-pane fade show active" id="consultation-pane" role="tabpanel" aria-labelledby="consultation-tab" tabindex="0">
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="{{ form.customer.id_for_label }}">Customer</label>
+                    {{ form.customer }}
+                    {{ form.customer.errors }}
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label" for="{{ form.consultation_date.id_for_label }}">Consultation Date</label>
+                    {{ form.consultation_date }}
+                    {{ form.consultation_date.errors }}
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label" for="{{ form.topic.id_for_label }}">Topic</label>
+                    {{ form.topic }}
+                    {{ form.topic.errors }}
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="notes-pane" role="tabpanel" aria-labelledby="notes-tab" tabindex="0">
+            <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <label class="form-label" for="{{ form.notes.id_for_label }}">Notes</label>
+                    {{ form.notes }}
+                    {{ form.notes.errors }}
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="followup-pane" role="tabpanel" aria-labelledby="followup-tab" tabindex="0">
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-4">
+                    <div class="form-check mt-md-4">
+                        {{ form.follow_up_required }}
+                        <label class="form-check-label" for="{{ form.follow_up_required.id_for_label }}">Follow-up Required</label>
+                        {{ form.follow_up_required.errors }}
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="{{ form.follow_up_date.id_for_label }}">Follow-up Date</label>
+                    {{ form.follow_up_date }}
+                    {{ form.follow_up_date.errors }}
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="form-check mt-md-4">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                        {{ form.is_active.errors }}
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="d-flex flex-column flex-md-row gap-2 justify-content-between border-top pt-3">
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" id="consultation-tab-prev" type="button" disabled>Previous</button>
+            <button class="btn btn-outline-secondary" id="consultation-tab-next" type="button">Next</button>
+        </div>
+        <div class="d-flex gap-2 justify-content-end">
+            <a class="btn btn-outline-secondary" href="{% url 'consultations:consultation_list' %}">Cancel</a>
+            <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+        </div>
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabs = Array.from(document.querySelectorAll('#consultation-form-tabs button[data-bs-toggle="tab"]'));
+        const previousButton = document.getElementById('consultation-tab-prev');
+        const nextButton = document.getElementById('consultation-tab-next');
+
+        function activeIndex() {
+            return tabs.findIndex((tab) => tab.classList.contains('active'));
+        }
+
+        function updateButtons() {
+            const index = activeIndex();
+            previousButton.disabled = index <= 0;
+            nextButton.disabled = index >= tabs.length - 1;
+        }
+
+        function showTab(index) {
+            if (index < 0 || index >= tabs.length) {
+                return;
+            }
+            bootstrap.Tab.getOrCreateInstance(tabs[index]).show();
+        }
+
+        previousButton.addEventListener('click', function () {
+            showTab(activeIndex() - 1);
+        });
+
+        nextButton.addEventListener('click', function () {
+            showTab(activeIndex() + 1);
+        });
+
+        tabs.forEach((tab) => {
+            tab.addEventListener('shown.bs.tab', updateButtons);
+        });
+
+        updateButtons();
+    });
+</script>
+{% endblock %}

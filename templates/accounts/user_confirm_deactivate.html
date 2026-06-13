@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Deactivate User | Astrology Research ERP{% endblock %}
+{% block page_title %}Deactivate User{% endblock %}
+
+{% block content %}
+<section class="page-card p-4">
+    <h2 class="h5 mb-2">Deactivate {{ managed_user.full_name|default:managed_user.username }}?</h2>
+    <p class="text-muted">This prevents the user from logging in while preserving their history.</p>
+    <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <a class="btn btn-outline-secondary" href="{% url 'accounts:user_detail' managed_user.pk %}">Cancel</a>
+        <button class="btn btn-danger" type="submit">Deactivate</button>
+    </form>
+</section>
+{% endblock %}

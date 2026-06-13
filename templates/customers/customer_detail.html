@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}{{ customer.customer_name }} | Astrology Research ERP{% endblock %}
+{% block page_title %}{{ customer.customer_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        {% if customer.is_active %}
+            <span class="badge text-bg-success">Active</span>
+        {% else %}
+            <span class="badge text-bg-secondary">Inactive</span>
+        {% endif %}
+        <p class="text-muted mb-0 mt-2">Customer master profile and birth details.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'customers:customer_list' %}">Back</a>
+        <a class="btn btn-outline-primary" href="{% url 'knowledge:research_interview_select' customer.pk %}">Start Research Interview</a>
+        <a class="btn btn-primary" href="{% url 'customers:customer_update' customer.pk %}">Edit</a>
+        {% if customer.is_active %}
+            <a class="btn btn-outline-danger" href="{% url 'customers:customer_deactivate' customer.pk %}">Deactivate</a>
+        {% endif %}
+    </div>
+</div>
+
+<section class="page-card p-4">
+    <ul class="nav nav-tabs mb-4" id="customer-profile-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-pane" type="button" role="tab" aria-controls="basic-pane" aria-selected="true">Basic Details</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="birth-tab" data-bs-toggle="tab" data-bs-target="#birth-pane" type="button" role="tab" aria-controls="birth-pane" aria-selected="false">Birth Details</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="astrology-tab" data-bs-toggle="tab" data-bs-target="#astrology-pane" type="button" role="tab" aria-controls="astrology-pane" aria-selected="false">Astrology Data</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes-pane" type="button" role="tab" aria-controls="notes-pane" aria-selected="false">Notes</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="customer-profile-tab-content">
+        <section class="tab-pane fade show active" id="basic-pane" role="tabpanel" aria-labelledby="basic-tab" tabindex="0">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="text-muted small">Customer Name</div>
+                    <div>{{ customer.customer_name }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Gender</div>
+                    <div>{{ customer.get_gender_display }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Marital Status</div>
+                    <div>{{ customer.get_marital_status_display }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Mobile</div>
+                    <div>{{ customer.mobile_number|default:"-" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Email</div>
+                    <div>{{ customer.email|default:"-" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Status</div>
+                    <div>{% if customer.is_active %}Active{% else %}Inactive{% endif %}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Occupation</div>
+                    <div>{{ customer.occupation|default:"-" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Education</div>
+                    <div>{{ customer.education|default:"-" }}</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="birth-pane" role="tabpanel" aria-labelledby="birth-tab" tabindex="0">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="text-muted small">Date of Birth</div>
+                    <div>{{ customer.date_of_birth|date:"d M Y"|default:"-" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Time of Birth</div>
+                    <div>{{ customer.time_of_birth|time:"H:i"|default:"-" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Timezone</div>
+                    <div>{{ customer.timezone|default:"-" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Place of Birth</div>
+                    <div>{{ customer.place_of_birth|default:"-" }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Latitude</div>
+                    <div>{{ customer.latitude|default:"-" }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Longitude</div>
+                    <div>{{ customer.longitude|default:"-" }}</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="astrology-pane" role="tabpanel" aria-labelledby="astrology-tab" tabindex="0">
+            {% if latest_api_data %}
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="text-muted small">Lagna</div>
+                        <div>{{ latest_api_data.lagna|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Moon Sign</div>
+                        <div>{{ latest_api_data.moon_sign|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Sun Sign</div>
+                        <div>{{ latest_api_data.sun_sign|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Nakshatra</div>
+                        <div>{{ latest_api_data.nakshatra|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="text-muted small">Pada</div>
+                        <div>{{ latest_api_data.pada|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">Mahadasha</div>
+                        <div>{{ latest_api_data.current_mahadasha|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">Antardasha</div>
+                        <div>{{ latest_api_data.current_antardasha|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Source</div>
+                        <div>{{ latest_api_data.get_data_source_display }}</div>
+                    </div>
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">No astrology data has been added yet.</p>
+            {% endif %}
+        </section>
+
+        <section class="tab-pane fade" id="notes-pane" role="tabpanel" aria-labelledby="notes-tab" tabindex="0">
+            <div class="mb-4">
+                <div class="text-muted small">Notes</div>
+                <div>{{ customer.notes|linebreaksbr|default:"No notes recorded." }}</div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-muted small">Created By</div>
+                    <div>{{ customer.created_by|default:"-" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Updated By</div>
+                    <div>{{ customer.updated_by|default:"-" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Created</div>
+                    <div>{{ customer.created_at|date:"d M Y H:i" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Updated</div>
+                    <div>{{ customer.updated_at|date:"d M Y H:i" }}</div>
+                </div>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

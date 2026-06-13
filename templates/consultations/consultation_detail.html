@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Consultation Detail | Astrology Research ERP{% endblock %}
+{% block page_title %}Consultation Detail{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        <span class="badge text-bg-light border">{{ consultation.get_topic_display }}</span>
+        {% if consultation.follow_up_required %}
+            <span class="badge text-bg-warning">Follow-up Required</span>
+        {% endif %}
+        {% if consultation.is_active %}
+            <span class="badge text-bg-success">Active</span>
+        {% else %}
+            <span class="badge text-bg-secondary">Inactive</span>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'consultations:consultation_list' %}">Back</a>
+        <a class="btn btn-primary" href="{% url 'consultations:consultation_update' consultation.pk %}">Edit</a>
+        {% if consultation.is_active %}
+            <a class="btn btn-outline-danger" href="{% url 'consultations:consultation_deactivate' consultation.pk %}">Deactivate</a>
+        {% endif %}
+    </div>
+</div>
+
+<section class="page-card p-4">
+    <ul class="nav nav-tabs mb-4" id="consultation-detail-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="consultation-tab" data-bs-toggle="tab" data-bs-target="#consultation-pane" type="button" role="tab" aria-controls="consultation-pane" aria-selected="true">Consultation</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes-pane" type="button" role="tab" aria-controls="notes-pane" aria-selected="false">Notes</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="followup-tab" data-bs-toggle="tab" data-bs-target="#followup-pane" type="button" role="tab" aria-controls="followup-pane" aria-selected="false">Follow-up</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit-pane" type="button" role="tab" aria-controls="audit-pane" aria-selected="false">Audit</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="consultation-detail-tab-content">
+        <section class="tab-pane fade show active" id="consultation-pane" role="tabpanel" aria-labelledby="consultation-tab" tabindex="0">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-muted small">Customer</div>
+                    <a href="{% url 'customers:customer_detail' consultation.customer.pk %}">{{ consultation.customer.customer_name }}</a>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Consultation Date</div>
+                    <div>{{ consultation.consultation_date|date:"d M Y H:i" }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Topic</div>
+                    <div>{{ consultation.get_topic_display }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Status</div>
+                    <div>{% if consultation.is_active %}Active{% else %}Inactive{% endif %}</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="notes-pane" role="tabpanel" aria-labelledby="notes-tab" tabindex="0">
+            <div>
+                <div class="text-muted small">Notes</div>
+                <div>{{ consultation.notes|linebreaksbr }}</div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="followup-pane" role="tabpanel" aria-labelledby="followup-tab" tabindex="0">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-muted small">Follow-up Required</div>
+                    <div>{% if consultation.follow_up_required %}Yes{% else %}No{% endif %}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Follow-up Date</div>
+                    <div>{{ consultation.follow_up_date|date:"d M Y"|default:"-" }}</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="audit-pane" role="tabpanel" aria-labelledby="audit-tab" tabindex="0">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-muted small">Created By</div>
+                    <div>{{ consultation.created_by|default:"-" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Updated By</div>
+                    <div>{{ consultation.updated_by|default:"-" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Created</div>
+                    <div>{{ consultation.created_at|date:"d M Y H:i" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Updated</div>
+                    <div>{{ consultation.updated_at|date:"d M Y H:i" }}</div>
+                </div>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

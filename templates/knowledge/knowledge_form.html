@@ -1,0 +1,1105 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | Astrology Research ERP{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<style>
+    .research-form-shell {
+        max-width: 100%;
+    }
+
+    .research-form-actions {
+        display: flex;
+        gap: 0.6rem;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+    }
+
+    .research-step {
+        background: #fff;
+        border: 1px solid #dbe3ec;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .research-step-header {
+        align-items: flex-start;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+    }
+
+    .research-step-number {
+        align-items: center;
+        background: #e9edf2;
+        border-radius: 999px;
+        color: #0f172a;
+        display: inline-flex;
+        flex: 0 0 30px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+    }
+
+    .research-step-body {
+        padding: 1.5rem;
+    }
+
+    .research-chip-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .research-chip {
+        background: #fff;
+        border: 1px solid #dbe3ec;
+        border-radius: 999px;
+        color: #0f172a;
+        padding: 0.35rem 0.9rem;
+    }
+
+    .research-chip.active {
+        background: #0f172a;
+        border-color: #0f172a;
+        color: #fff;
+    }
+
+    .confidence-wrap {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 1rem;
+        align-items: center;
+    }
+</style>
+
+<form method="post" class="research-form-shell">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {{ form.category }}
+    {{ form.applies_to_type }}
+    {{ form.applies_to_name }}
+    {{ form.applies_to_subtype }}
+    {{ form.related_factor }}
+    {{ form.life_areas }}
+    {{ form.confidence_level }}
+
+    <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-start mb-3">
+        <div>
+            <div class="text-muted small"><a class="text-decoration-none" href="{% url 'knowledge:knowledge_list' %}">Research Library</a> / New</div>
+            <h2 class="h3 mb-0">{{ page_title }}</h2>
+        </div>
+        <div class="research-form-actions">
+            <a class="btn btn-outline-secondary" href="{% url 'knowledge:knowledge_list' %}">Cancel</a>
+            <button class="btn btn-outline-secondary" id="save-draft-button" type="submit">Save as Draft</button>
+            <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+        </div>
+    </div>
+
+    <section class="research-step">
+        <div class="research-step-header">
+            <span class="research-step-number">1</span>
+            <div>
+                <h3 class="h6 mb-1">Basic Classification</h3>
+                <p class="text-muted mb-0">How does this rule fit in your research taxonomy?</p>
+            </div>
+        </div>
+        <div class="research-step-body">
+            <div class="row g-4">
+                <div class="col-12 col-lg-6">
+                    <label class="form-label" for="{{ form.system.id_for_label }}">System <span class="text-danger">*</span></label>
+                    {{ form.system }}
+                    {{ form.system.errors }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    <label class="form-label" for="{{ form.section.id_for_label }}">Section <span class="text-danger">*</span></label>
+                    {{ form.section }}
+                    {{ form.section.errors }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    <label class="form-label" for="{{ form.knowledge_type.id_for_label }}">Rule Type <span class="text-danger">*</span></label>
+                    {{ form.knowledge_type }}
+                    {{ form.knowledge_type.errors }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    <label class="form-label" for="{{ form.status.id_for_label }}">Status <span class="text-danger">*</span></label>
+                    {{ form.status }}
+                    {{ form.status.errors }}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="research-step">
+        <div class="research-step-header">
+            <span class="research-step-number">2</span>
+            <div>
+                <h3 class="h6 mb-1">Astrology Combination</h3>
+                <p class="text-muted mb-0" id="combination-help">Fields update based on the selected section.</p>
+            </div>
+        </div>
+        <div class="research-step-body">
+            <div class="row g-4" id="combination-fields"></div>
+        </div>
+    </section>
+
+    <section class="research-step">
+        <div class="research-step-header">
+            <span class="research-step-number">3</span>
+            <div>
+                <h3 class="h6 mb-1">Life Areas</h3>
+                <p class="text-muted mb-0">Pick all life domains this hypothesis affects.</p>
+            </div>
+        </div>
+        <div class="research-step-body">
+            <div class="research-chip-list" id="life-area-chips">
+                <button class="research-chip" type="button" data-value="Marriage">Marriage</button>
+                <button class="research-chip" type="button" data-value="Career">Career</button>
+                <button class="research-chip" type="button" data-value="Finance">Finance</button>
+                <button class="research-chip" type="button" data-value="Health">Health</button>
+                <button class="research-chip" type="button" data-value="Education">Education</button>
+                <button class="research-chip" type="button" data-value="Children">Children</button>
+                <button class="research-chip" type="button" data-value="Family">Family</button>
+                <button class="research-chip" type="button" data-value="Spirituality">Spirituality</button>
+                <button class="research-chip" type="button" data-value="Foreign Travel">Foreign Travel</button>
+                <button class="research-chip" type="button" data-value="Business">Business</button>
+                <button class="research-chip" type="button" data-value="Public Image">Public Image</button>
+                <button class="research-chip" type="button" data-value="Relationships">Relationships</button>
+                <button class="research-chip" type="button" data-value="Mental Health">Mental Health</button>
+                <button class="research-chip" type="button" data-value="Leadership">Leadership</button>
+                <button class="research-chip" type="button" data-value="Property">Property</button>
+                <button class="research-chip" type="button" data-value="Legal Matters">Legal Matters</button>
+                <button class="research-chip" type="button" data-value="Creativity">Creativity</button>
+                <button class="research-chip" type="button" data-value="Communication">Communication</button>
+                <button class="research-chip" type="button" data-value="Social Status">Social Status</button>
+                <button class="research-chip" type="button" data-value="Moksha">Moksha</button>
+            </div>
+            {{ form.life_areas.errors }}
+        </div>
+    </section>
+
+    <section class="research-step">
+        <div class="research-step-header">
+            <span class="research-step-number">4</span>
+            <div>
+                <h3 class="h6 mb-1">Knowledge Content</h3>
+                <p class="text-muted mb-0">The actual research insight, clearly written.</p>
+            </div>
+        </div>
+        <div class="research-step-body">
+            <div class="row g-4">
+                <div class="col-12">
+                    <label class="form-label" for="{{ form.title.id_for_label }}">Title <span class="text-danger">*</span></label>
+                    {{ form.title }}
+                    {{ form.title.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="{{ form.short_meaning.id_for_label }}">Short Meaning</label>
+                    {{ form.short_meaning }}
+                    {{ form.short_meaning.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="{{ form.description.id_for_label }}">Detailed Description</label>
+                    {{ form.description }}
+                    {{ form.description.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="{{ form.expected_result.id_for_label }}">Expected Result</label>
+                    {{ form.expected_result }}
+                    {{ form.expected_result.errors }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    <label class="form-label" for="{{ form.nature.id_for_label }}">Nature</label>
+                    {{ form.nature }}
+                    {{ form.nature.errors }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    <label class="form-label" for="research-source">Source</label>
+                    <select class="form-select" id="research-source">
+                        <option>Classical Text</option>
+                        <option>Teacher / Tradition</option>
+                        <option>Case Observation</option>
+                        <option>Research Question</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="confidence-slider">Confidence Level - <span id="confidence-display">5/10</span></label>
+                    <div class="confidence-wrap">
+                        <span class="text-muted small">1</span>
+                        <input class="form-range" id="confidence-slider" type="range" min="1" max="10" value="5">
+                        <span class="text-muted small">10</span>
+                    </div>
+                    {{ form.confidence_level.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="{{ form.verification_question.id_for_label }}">Internal Notes</label>
+                    {{ form.verification_question }}
+                    {{ form.verification_question.errors }}
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                        {{ form.is_active.errors }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="research-step">
+        <div class="research-step-header">
+            <span class="research-step-number">5</span>
+            <div>
+                <h3 class="h6 mb-1">Verification Questions</h3>
+                <p class="text-muted mb-0">Add multiple questions now. These will appear during customer research interviews later.</p>
+            </div>
+        </div>
+        <div class="research-step-body">
+            {{ question_formset.management_form }}
+            {% if question_formset.non_form_errors %}
+                <div class="alert alert-danger">{{ question_formset.non_form_errors }}</div>
+            {% endif %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 52%;">Question Text</th>
+                            <th>Question Type</th>
+                            <th style="width: 110px;">Sort</th>
+                            <th style="width: 100px;">Active</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for question_form in question_formset %}
+                            <tr>
+                                <td>
+                                    {% for hidden in question_form.hidden_fields %}{{ hidden }}{% endfor %}
+                                    {{ question_form.question_text }}
+                                    {{ question_form.question_text.errors }}
+                                </td>
+                                <td>
+                                    {{ question_form.question_type }}
+                                    {{ question_form.question_type.errors }}
+                                </td>
+                                <td>
+                                    {{ question_form.sort_order }}
+                                    {{ question_form.sort_order.errors }}
+                                </td>
+                                <td>
+                                    <div class="form-check">
+                                        {{ question_form.is_active }}
+                                    </div>
+                                    {{ question_form.is_active.errors }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-text mt-2">Leave unused rows blank. More questions can still be added from the hypothesis detail page.</div>
+        </div>
+    </section>
+
+    <div class="d-flex gap-2 justify-content-end mb-4">
+        <a class="btn btn-outline-secondary" href="{% url 'knowledge:knowledge_list' %}">Cancel</a>
+        <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const planets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
+        const signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+        const signLords = {
+            Aries: 'Mars',
+            Taurus: 'Venus',
+            Gemini: 'Mercury',
+            Cancer: 'Moon',
+            Leo: 'Sun',
+            Virgo: 'Mercury',
+            Libra: 'Venus',
+            Scorpio: 'Mars',
+            Sagittarius: 'Jupiter',
+            Capricorn: 'Saturn',
+            Aquarius: 'Saturn',
+            Pisces: 'Jupiter',
+        };
+        const houses = ['1st House', '2nd House', '3rd House', '4th House', '5th House', '6th House', '7th House', '8th House', '9th House', '10th House', '11th House', '12th House'];
+        const dashaTypes = ['Mahadasha', 'Antardasha', 'Pratyantardasha'];
+        const nakshatras = ['Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira', 'Ardra', 'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni', 'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha', 'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati'];
+        const padas = ['Pada 1', 'Pada 2', 'Pada 3', 'Pada 4'];
+        const doshas = ['Kuja Dosha', 'Sade Sati', 'Rahu-Ketu Axis', 'Kemadruma', 'Pitru Dosha', 'Kala Sarpa'];
+        const dashaLords = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
+        const yogaNames = ['Raja Yoga', 'Dhana Yoga', 'Gaja Kesari Yoga', 'Neecha Bhanga', 'Vipareeta Raja Yoga'];
+        const chartTypes = ['D9', 'D10', 'D12', 'D30', 'D60'];
+        const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '11', '22', '33'];
+        const numberTypes = ['Life Path', 'Destiny', 'Soul Urge', 'Personality', 'Name Number', 'Personal Year'];
+        const eventAreas = ['Marriage', 'Career', 'Child Birth', 'Property', 'Foreign Travel', 'Health', 'Finance', 'Education'];
+        const bnnPatterns = ['Marriage Pattern', 'Career Pattern', 'Spiritual Pattern', 'Karmic Pattern', 'Family Karma', 'Ancestor Karma'];
+        const arudhaTypes = ['Arudha Lagna', 'A2', 'A4', 'A7', 'A10', 'Upapada Lagna'];
+        const jaiminiKarakaTypes = ['Atmakaraka', 'Amatyakaraka', 'Darakaraka', 'Bhratrukaraka', 'Matrukaraka', 'Putrakaraka'];
+
+        const sectionField = document.getElementById('{{ form.section.id_for_label }}');
+        const systemField = document.getElementById('{{ form.system.id_for_label }}');
+        const appliesTypeField = document.getElementById('{{ form.applies_to_type.id_for_label }}');
+        const appliesNameField = document.getElementById('{{ form.applies_to_name.id_for_label }}');
+        const appliesSubtypeField = document.getElementById('{{ form.applies_to_subtype.id_for_label }}');
+        const relatedFactorField = document.getElementById('{{ form.related_factor.id_for_label }}');
+        const lifeAreasField = document.getElementById('{{ form.life_areas.id_for_label }}');
+        const confidenceField = document.getElementById('{{ form.confidence_level.id_for_label }}');
+        const confidenceSlider = document.getElementById('confidence-slider');
+        const confidenceDisplay = document.getElementById('confidence-display');
+        const combinationFields = document.getElementById('combination-fields');
+        const combinationHelp = document.getElementById('combination-help');
+        const saveDraftButton = document.getElementById('save-draft-button');
+        const statusField = document.getElementById('{{ form.status.id_for_label }}');
+        const titleField = document.getElementById('{{ form.title.id_for_label }}');
+        const shortMeaningField = document.getElementById('{{ form.short_meaning.id_for_label }}');
+        let titleEdited = Boolean(titleField.value);
+
+        function optionList(values, placeholder) {
+            return [`<option value="">${placeholder}</option>`].concat(
+                values.map((value) => `<option value="${value}">${value}</option>`)
+            ).join('');
+        }
+
+        function fieldHtml(field) {
+            return `
+                <div class="col-12 col-lg-${field.width || 6}">
+                    <label class="form-label" for="combo-${field.key}">${field.label}</label>
+                    <select class="form-select combo-field" id="combo-${field.key}" data-key="${field.key}" data-title-part="${field.titlePart === false ? 'false' : 'true'}" data-applies="${field.applies || ''}" ${field.disabled ? 'disabled' : ''}>
+                        ${optionList(field.values, field.placeholder)}
+                    </select>
+                </div>
+            `;
+        }
+
+        const allSectionOptions = Array.from(sectionField.options).map((option) => ({
+            value: option.value,
+            label: option.textContent,
+        }));
+
+        const sectionsBySystem = {
+            classical_astrology: [
+                'lagna',
+                'planet_in_house',
+                'planet_in_sign',
+                'planet_in_nakshatra',
+                'planet_in_nakshatra_pada',
+                'house_lord_in_house',
+                'house_lord_in_sign',
+                'house_lord_in_nakshatra',
+                'house_lord_in_nakshatra_pada',
+                'dasha',
+                'transit',
+                'dosha',
+                'yoga',
+                'divisional_chart',
+            ],
+            bnn: [
+                'planet_activation_age',
+                'planet_combination',
+                'planet_chain',
+                'signification_transfer',
+                'house_activation',
+                'event_timing',
+                'marriage_pattern',
+                'career_pattern',
+                'spiritual_pattern',
+                'karmic_pattern',
+            ],
+            kp: [
+                'house_signification',
+                'planet_significator',
+                'cuspal_sub_lord',
+                'marriage_rule',
+                'career_rule',
+                'child_birth_rule',
+                'property_rule',
+                'foreign_travel_rule',
+                'health_rule',
+                'event_timing',
+            ],
+            numerology: [
+                'life_path_number',
+                'destiny_number',
+                'soul_urge_number',
+                'personality_number',
+                'name_number',
+                'personal_year_number',
+                'compatibility',
+                'career_pattern',
+                'financial_pattern',
+                'relationship_pattern',
+                'health_pattern',
+            ],
+            jaimini: [
+                'atmakaraka',
+                'amatyakaraka',
+                'darakaraka',
+                'karakamsha_lagna',
+                'swamsha',
+                'arudha_lagna',
+                'pada_analysis',
+                'chara_dasha',
+                'upapada_lagna',
+                'career_indicators',
+                'marriage_indicators',
+                'spiritual_indicators',
+            ],
+        };
+
+        const configs = {
+            lagna: {
+                help: 'Fields update based on the selected section (Lagna).',
+                appliesType: 'sign',
+                titleTemplate: '{lagna_sign} Lagna',
+                fields: [
+                    { key: 'lagna_sign', label: 'Lagna Sign', values: signs, placeholder: 'Select lagna sign' },
+                ],
+            },
+            planet_in_house: {
+                help: 'Fields update based on the selected section (Planet in House).',
+                appliesType: 'planet',
+                titleTemplate: '{planet} in {house}',
+                fields: [
+                    { key: 'planet', label: 'Planet', values: planets, placeholder: 'Select planet' },
+                    { key: 'house', label: 'House', values: houses, placeholder: 'Select house' },
+                ],
+            },
+            planet_in_sign: {
+                help: 'Fields update based on the selected section (Planet in Sign).',
+                appliesType: 'planet',
+                titleTemplate: '{planet} in {sign}',
+                fields: [
+                    { key: 'planet', label: 'Planet', values: planets, placeholder: 'Select planet' },
+                    { key: 'sign', label: 'Sign', values: signs, placeholder: 'Select sign' },
+                ],
+            },
+            planet_in_nakshatra: {
+                help: 'Fields update based on the selected section (Planet in Nakshatra).',
+                appliesType: 'planet',
+                titleTemplate: '{planet} in {nakshatra}',
+                fields: [
+                    { key: 'planet', label: 'Planet', values: planets, placeholder: 'Select planet' },
+                    { key: 'nakshatra', label: 'Nakshatra', values: nakshatras, placeholder: 'Select nakshatra' },
+                ],
+            },
+            planet_in_nakshatra_pada: {
+                help: 'Fields update based on the selected section (Planet in Nakshatra Pada).',
+                appliesType: 'planet',
+                titleTemplate: '{planet} in {nakshatra} {pada}',
+                fields: [
+                    { key: 'planet', label: 'Planet', values: planets, placeholder: 'Select planet', width: 4 },
+                    { key: 'nakshatra', label: 'Nakshatra', values: nakshatras, placeholder: 'Select nakshatra', width: 4 },
+                    { key: 'pada', label: 'Pada', values: padas, placeholder: 'Select pada', width: 4 },
+                ],
+            },
+            nakshatra: {
+                help: 'Fields update based on the selected section (Nakshatra).',
+                appliesType: 'nakshatra',
+                fields: [
+                    { key: 'nakshatra', label: 'Nakshatra', values: nakshatras, placeholder: 'Select nakshatra' },
+                ],
+            },
+            nakshatra_pada: {
+                help: 'Fields update based on the selected section (Nakshatra Pada).',
+                appliesType: 'nakshatra',
+                fields: [
+                    { key: 'nakshatra', label: 'Nakshatra', values: nakshatras, placeholder: 'Select nakshatra' },
+                    { key: 'pada', label: 'Pada', values: padas, placeholder: 'Select pada' },
+                ],
+            },
+            dasha: {
+                help: 'Fields update based on the selected section (Dasha).',
+                appliesType: 'dasha',
+                titleTemplate: '{dasha_type} {planet}',
+                fields: [
+                    { key: 'dasha_type', label: 'Dasha Type', values: dashaTypes, placeholder: 'Select dasha type' },
+                    { key: 'planet', label: 'Planet', values: dashaLords, placeholder: 'Select planet' },
+                ],
+            },
+            house_lord_in_house: {
+                help: 'Fields update based on the selected section (House Lord in House).',
+                appliesType: 'house',
+                titleTemplate: '{source_house} Lord {lord_planet} in {placed_house} {placed_sign}',
+                fields: [
+                    { key: 'source_house', label: 'Source House', values: houses, placeholder: 'Select source house', width: 3 },
+                    { key: 'source_sign', label: 'Source Sign', values: signs, placeholder: 'Select source sign', width: 3 },
+                    { key: 'lord_planet', label: 'Lord', values: planets, placeholder: 'Auto lord', width: 3, disabled: true },
+                    { key: 'placed_house', label: 'Destination House', values: houses, placeholder: 'Select destination house', width: 3 },
+                    { key: 'placed_sign', label: 'Destination Sign', values: signs, placeholder: 'Auto sign', width: 3, disabled: true },
+                ],
+            },
+            house_lord_in_sign: {
+                help: 'Fields update based on the selected section (House Lord in Sign). Source sign can be manual until Lagna context is available.',
+                appliesType: 'house',
+                titleTemplate: '{source_house} Lord {lord_planet} in {destination_sign}',
+                fields: [
+                    { key: 'source_house', label: 'Source House', values: houses, placeholder: 'Select source house', width: 3 },
+                    { key: 'source_sign', label: 'Source Sign', values: signs, placeholder: 'Select source sign', width: 3 },
+                    { key: 'lord_planet', label: 'Lord Planet', values: planets, placeholder: 'Auto lord', width: 3, disabled: true },
+                    { key: 'destination_sign', label: 'Destination Sign', values: signs, placeholder: 'Select destination sign', width: 3 },
+                ],
+            },
+            house_lord_in_nakshatra: {
+                help: 'Fields update based on the selected section (House Lord in Nakshatra). Source sign can be manual until Lagna context is available.',
+                appliesType: 'house',
+                titleTemplate: '{source_house} Lord {lord_planet} in {nakshatra}',
+                fields: [
+                    { key: 'source_house', label: 'Source House', values: houses, placeholder: 'Select source house', width: 3 },
+                    { key: 'source_sign', label: 'Source Sign', values: signs, placeholder: 'Select source sign', width: 3 },
+                    { key: 'lord_planet', label: 'Lord Planet', values: planets, placeholder: 'Auto lord', width: 3, disabled: true },
+                    { key: 'nakshatra', label: 'Nakshatra', values: nakshatras, placeholder: 'Select nakshatra', width: 3 },
+                ],
+            },
+            house_lord_in_nakshatra_pada: {
+                help: 'Fields update based on the selected section (House Lord in Nakshatra Pada). Source sign can be manual until Lagna context is available.',
+                appliesType: 'house',
+                titleTemplate: '{source_house} Lord {lord_planet} in {nakshatra} {pada}',
+                fields: [
+                    { key: 'source_house', label: 'Source House', values: houses, placeholder: 'Select source house', width: 3 },
+                    { key: 'source_sign', label: 'Source Sign', values: signs, placeholder: 'Select source sign', width: 3 },
+                    { key: 'lord_planet', label: 'Lord Planet', values: planets, placeholder: 'Auto lord', width: 2, disabled: true },
+                    { key: 'nakshatra', label: 'Nakshatra', values: nakshatras, placeholder: 'Select nakshatra', width: 2 },
+                    { key: 'pada', label: 'Pada', values: padas, placeholder: 'Select pada', width: 2 },
+                ],
+            },
+            dosha: {
+                help: 'Fields update based on the selected section (Dosha).',
+                appliesType: 'dosha',
+                fields: [
+                    { key: 'dosha', label: 'Dosha', values: doshas, placeholder: 'Select dosha' },
+                ],
+            },
+            yoga: {
+                help: 'Fields update based on the selected section (Yoga).',
+                appliesType: 'planet_combination',
+                fields: [
+                    { key: 'yoga', label: 'Yoga', values: yogaNames, placeholder: 'Select yoga' },
+                ],
+            },
+            transit: {
+                help: 'Fields update based on the selected section (Transit).',
+                appliesType: 'transit',
+                titleTemplate: '{planet} Transit {sign}',
+                fields: [
+                    { key: 'planet', label: 'Planet', values: planets, placeholder: 'Select planet' },
+                    { key: 'sign', label: 'Sign', values: signs, placeholder: 'Select sign' },
+                ],
+            },
+            divisional_chart: {
+                help: 'Fields update based on the selected section (Divisional Chart).',
+                appliesType: 'general',
+                titleTemplate: '{chart_type} Chart Rule',
+                fields: [
+                    { key: 'chart_type', label: 'Chart Type', values: chartTypes, placeholder: 'Select chart type' },
+                ],
+            },
+            numerology_number: {
+                help: 'Fields update based on the selected section (Numerology Number).',
+                appliesType: 'general',
+                fields: [
+                    { key: 'number_type', label: 'Number Type', values: numberTypes, placeholder: 'Select type' },
+                    { key: 'number_value', label: 'Number Value', values: numbers, placeholder: '1-9, 11, 22, 33' },
+                ],
+            },
+            life_path_number: {
+                help: 'Fields update based on the selected section (Life Path Number).',
+                appliesType: 'general',
+                titleTemplate: 'Life Path {number_value}',
+                fields: [
+                    { key: 'number_type', label: 'Number Type', values: numberTypes, placeholder: 'Life Path', width: 6 },
+                    { key: 'number_value', label: 'Number Value', values: numbers, placeholder: '1-9, 11, 22, 33', width: 6 },
+                ],
+            },
+            destiny_number: {
+                help: 'Fields update based on the selected section (Destiny Number).',
+                appliesType: 'general',
+                titleTemplate: 'Destiny Number {number_value}',
+                fields: [
+                    { key: 'number_type', label: 'Number Type', values: numberTypes, placeholder: 'Destiny', width: 6 },
+                    { key: 'number_value', label: 'Number Value', values: numbers, placeholder: '1-9, 11, 22, 33', width: 6 },
+                ],
+            },
+            soul_urge_number: {
+                help: 'Fields update based on the selected section (Soul Urge Number).',
+                appliesType: 'general',
+                titleTemplate: 'Soul Urge Number {number_value}',
+                fields: [
+                    { key: 'number_type', label: 'Number Type', values: numberTypes, placeholder: 'Soul Urge', width: 6 },
+                    { key: 'number_value', label: 'Number Value', values: numbers, placeholder: '1-9, 11, 22, 33', width: 6 },
+                ],
+            },
+            personality_number: {
+                help: 'Fields update based on the selected section (Personality Number).',
+                appliesType: 'general',
+                titleTemplate: 'Personality Number {number_value}',
+                fields: [
+                    { key: 'number_type', label: 'Number Type', values: numberTypes, placeholder: 'Personality', width: 6 },
+                    { key: 'number_value', label: 'Number Value', values: numbers, placeholder: '1-9, 11, 22, 33', width: 6 },
+                ],
+            },
+            name_number: {
+                help: 'Fields update based on the selected section (Name Number).',
+                appliesType: 'general',
+                titleTemplate: 'Name Number {number_value}',
+                fields: [
+                    { key: 'number_type', label: 'Number Type', values: numberTypes, placeholder: 'Name Number', width: 6 },
+                    { key: 'number_value', label: 'Number Value', values: numbers, placeholder: '1-9, 11, 22, 33', width: 6 },
+                ],
+            },
+            personal_year_number: {
+                help: 'Fields update based on the selected section (Personal Year Number).',
+                appliesType: 'general',
+                titleTemplate: 'Personal Year {number_value}',
+                fields: [
+                    { key: 'number_type', label: 'Number Type', values: numberTypes, placeholder: 'Personal Year', width: 6 },
+                    { key: 'number_value', label: 'Number Value', values: numbers, placeholder: '1-9, 11, 22, 33', width: 6 },
+                ],
+            },
+            compatibility: {
+                help: 'Fields update based on the selected section (Numerology Compatibility).',
+                appliesType: 'general',
+                titleTemplate: 'Compatibility {number_1} and {number_2}',
+                fields: [
+                    { key: 'number_1', label: 'Number 1', values: numbers, placeholder: 'Select number' },
+                    { key: 'number_2', label: 'Number 2', values: numbers, placeholder: 'Select number' },
+                ],
+            },
+            career_pattern: {
+                help: 'Fields update based on the selected section (Career Pattern).',
+                appliesType: 'general',
+                titleTemplate: '{pattern_name}',
+                fields: [
+                    { key: 'pattern_name', label: 'Pattern Name / Number', values: numbers.concat(bnnPatterns), placeholder: 'Select pattern' },
+                ],
+            },
+            financial_pattern: {
+                help: 'Fields update based on the selected section (Financial Pattern).',
+                appliesType: 'general',
+                titleTemplate: 'Number {number_value} Financial Pattern',
+                fields: [
+                    { key: 'number_value', label: 'Number', values: numbers, placeholder: 'Select number' },
+                ],
+            },
+            relationship_pattern: {
+                help: 'Fields update based on the selected section (Relationship Pattern).',
+                appliesType: 'general',
+                titleTemplate: 'Number {number_value} Relationship Pattern',
+                fields: [
+                    { key: 'number_value', label: 'Number', values: numbers, placeholder: 'Select number' },
+                ],
+            },
+            health_pattern: {
+                help: 'Fields update based on the selected section (Health Pattern).',
+                appliesType: 'general',
+                titleTemplate: 'Number {number_value} Health Pattern',
+                fields: [
+                    { key: 'number_value', label: 'Number', values: numbers, placeholder: 'Select number' },
+                ],
+            },
+            planet_activation_age: {
+                help: 'Fields update based on the selected section (BNN Planet Activation Age).',
+                appliesType: 'planet',
+                titleTemplate: '{planet} Activation Age {activation_age}',
+                fields: [
+                    { key: 'planet', label: 'Planet', values: planets, placeholder: 'Select planet' },
+                    { key: 'activation_age', label: 'Activation Age', values: ['12', '18', '21', '24', '28', '30', '32', '36', '42', '48', '54', '60'], placeholder: 'Select age' },
+                ],
+            },
+            planet_combination: {
+                help: 'Fields update based on the selected section (BNN Planet Combination).',
+                appliesType: 'planet_combination',
+                titleTemplate: '{planet_1} + {planet_2}',
+                fields: [
+                    { key: 'planet_1', label: 'Planet 1', values: planets, placeholder: 'Select planet' },
+                    { key: 'planet_2', label: 'Planet 2', values: planets, placeholder: 'Select planet' },
+                ],
+            },
+            planet_chain: {
+                help: 'Fields update based on the selected section (BNN Planet Chain).',
+                appliesType: 'planet_combination',
+                titleTemplate: '{planet_1} -> {planet_2} -> {planet_3}',
+                fields: [
+                    { key: 'planet_1', label: 'Planet 1', values: planets, placeholder: 'Select planet', width: 4 },
+                    { key: 'planet_2', label: 'Planet 2', values: planets, placeholder: 'Select planet', width: 4 },
+                    { key: 'planet_3', label: 'Planet 3', values: planets, placeholder: 'Select planet', width: 4 },
+                ],
+            },
+            signification_transfer: {
+                help: 'Fields update based on the selected section (BNN Signification Transfer).',
+                appliesType: 'general',
+                titleTemplate: '{source_planet} transfers to {destination_planet}',
+                fields: [
+                    { key: 'source_planet', label: 'Source Planet', values: planets, placeholder: 'Select planet' },
+                    { key: 'destination_planet', label: 'Destination Planet', values: planets, placeholder: 'Select planet' },
+                ],
+            },
+            house_activation: {
+                help: 'Fields update based on the selected section (BNN House Activation).',
+                appliesType: 'house',
+                titleTemplate: '{house} Activation',
+                fields: [
+                    { key: 'house', label: 'House', values: houses, placeholder: 'Select house' },
+                ],
+            },
+            marriage_pattern: {
+                help: 'Fields update based on the selected section (BNN Marriage Pattern).',
+                appliesType: 'general',
+                titleTemplate: '{pattern_name}',
+                fields: [
+                    { key: 'pattern_name', label: 'Pattern Name', values: ['Delayed Marriage', 'Multiple Relationships', 'Early Marriage', 'Spiritual Marriage'], placeholder: 'Select pattern' },
+                ],
+            },
+            spiritual_pattern: {
+                help: 'Fields update based on the selected section (BNN Spiritual Pattern).',
+                appliesType: 'general',
+                titleTemplate: '{pattern_name}',
+                fields: [
+                    { key: 'pattern_name', label: 'Pattern Name', values: ['Moksha Inclination', 'Guru Seeking', 'Pilgrimage', 'Renunciation'], placeholder: 'Select pattern' },
+                ],
+            },
+            karmic_pattern: {
+                help: 'Fields update based on the selected section (BNN Karmic Pattern).',
+                appliesType: 'general',
+                titleTemplate: '{pattern_name}',
+                fields: [
+                    { key: 'pattern_name', label: 'Pattern Name', values: ['Family Karma', 'Ancestor Karma', 'Relationship Karma', 'Wealth Karma'], placeholder: 'Select pattern' },
+                ],
+            },
+            house_signification: {
+                help: 'Fields update based on the selected section (KP House Signification).',
+                appliesType: 'house',
+                titleTemplate: '{house} Signification',
+                fields: [
+                    { key: 'house', label: 'House', values: houses, placeholder: 'Select house' },
+                ],
+            },
+            planet_significator: {
+                help: 'Fields update based on the selected section (KP Planet Significator).',
+                appliesType: 'planet',
+                titleTemplate: '{planet} Significator for {event_area}',
+                fields: [
+                    { key: 'planet', label: 'Planet', values: planets, placeholder: 'Select planet' },
+                    { key: 'event_area', label: 'Event Area', values: eventAreas, placeholder: 'Select event area' },
+                ],
+            },
+            cuspal_sub_lord: {
+                help: 'Fields update based on the selected section (KP Cuspal Sub Lord).',
+                appliesType: 'house',
+                titleTemplate: '{house} CSL {planet}',
+                fields: [
+                    { key: 'house', label: 'House', values: houses, placeholder: 'Select house' },
+                    { key: 'planet', label: 'Cuspal Sub Lord', values: planets, placeholder: 'Select planet' },
+                ],
+            },
+            kp_rule: {
+                help: 'Fields update based on the selected section (KP Rule).',
+                appliesType: 'general',
+                titleTemplate: '{house_combination} {event_area} Rule',
+                fields: [
+                    { key: 'house_combination', label: 'House Combination', values: ['2-7-11', '5-7-11', '2-6-10-11', '2-5-11', '4-11', '3-9-12', '6-8-12'], placeholder: 'Select combination' },
+                    { key: 'event_area', label: 'Event Area', values: eventAreas, placeholder: 'Select event area' },
+                ],
+            },
+            marriage_rule: null,
+            child_birth_rule: null,
+            property_rule: null,
+            foreign_travel_rule: null,
+            health_rule: null,
+            bnn_rule: {
+                help: 'Fields update based on the selected section (BNN Rule).',
+                appliesType: 'general',
+                fields: [
+                    { key: 'bnn_factor', label: 'BNN Factor', values: ['Jupiter', 'Saturn', 'Rahu', 'Ketu', 'Planet Combination', 'House Link'], placeholder: 'Select BNN factor' },
+                ],
+            },
+            age_activation: {
+                help: 'Fields update based on the selected section (Age Activation).',
+                appliesType: 'general',
+                fields: [
+                    { key: 'age', label: 'Age Range', values: ['0-12', '13-24', '25-36', '37-48', '49-60', '61+'], placeholder: 'Select age range' },
+                ],
+            },
+            event_timing: {
+                help: 'Fields update based on the selected section (Event Timing).',
+                appliesType: 'general',
+                titleTemplate: '{event_type} Timing',
+                fields: [
+                    { key: 'event_type', label: 'Event Type', values: eventAreas, placeholder: 'Select event type', width: 4 },
+                    { key: 'dasha', label: 'Dasha / Planet', values: dashaLords, placeholder: 'Select dasha', width: 4 },
+                    { key: 'bhukti', label: 'Bhukti', values: dashaLords, placeholder: 'Select bhukti', width: 4 },
+                ],
+            },
+            atmakaraka: null,
+            amatyakaraka: null,
+            darakaraka: null,
+            karakamsha_lagna: {
+                help: 'Fields update based on the selected section (Karakamsha Lagna).',
+                appliesType: 'sign',
+                titleTemplate: 'Karakamsha in {sign}',
+                fields: [
+                    { key: 'sign', label: 'Sign', values: signs, placeholder: 'Select sign' },
+                ],
+            },
+            swamsha: {
+                help: 'Fields update based on the selected section (Swamsha).',
+                appliesType: 'sign',
+                titleTemplate: 'Swamsha in {sign}',
+                fields: [
+                    { key: 'sign', label: 'Sign', values: signs, placeholder: 'Select sign' },
+                ],
+            },
+            arudha_lagna: {
+                help: 'Fields update based on the selected section (Jaimini Arudha).',
+                appliesType: 'arudha',
+                titleTemplate: '{arudha_type} in {sign}',
+                fields: [
+                    { key: 'arudha_type', label: 'Arudha Type', values: arudhaTypes, placeholder: 'Select arudha type', width: 4 },
+                    { key: 'sign', label: 'Sign', values: signs, placeholder: 'Select sign', width: 4 },
+                    { key: 'house', label: 'House', values: houses, placeholder: 'Select house if needed', width: 4 },
+                ],
+            },
+            pada_analysis: {
+                help: 'Fields update based on the selected section (Pada Analysis).',
+                appliesType: 'arudha',
+                titleTemplate: '{house_pada} Analysis',
+                fields: [
+                    { key: 'house_pada', label: 'House Pada', values: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10', 'A11', 'A12'], placeholder: 'Select pada' },
+                ],
+            },
+            chara_dasha: {
+                help: 'Fields update based on the selected section (Chara Dasha).',
+                appliesType: 'dasha',
+                titleTemplate: '{sign} Chara Dasha',
+                fields: [
+                    { key: 'sign', label: 'Sign Dasha', values: signs, placeholder: 'Select sign' },
+                ],
+            },
+            upapada_lagna: {
+                help: 'Fields update based on the selected section (Upapada Lagna).',
+                appliesType: 'arudha',
+                titleTemplate: 'UL in {sign}',
+                fields: [
+                    { key: 'sign', label: 'Sign', values: signs, placeholder: 'Select sign' },
+                ],
+            },
+            career_indicators: {
+                help: 'Fields update based on the selected section (Career Indicators).',
+                appliesType: 'general',
+                titleTemplate: '{indicator_type}',
+                fields: [
+                    { key: 'indicator_type', label: 'Career Rule', values: ['AK + AmK Combination', 'A10 Analysis', 'Amatyakaraka Strength', 'Dashamsha Link'], placeholder: 'Select rule' },
+                ],
+            },
+            marriage_indicators: {
+                help: 'Fields update based on the selected section (Marriage Indicators).',
+                appliesType: 'general',
+                titleTemplate: '{indicator_type}',
+                fields: [
+                    { key: 'indicator_type', label: 'Marriage Rule', values: ['Darakaraka + A7', 'UL Analysis', 'DK Strength', 'A7 Connection'], placeholder: 'Select rule' },
+                ],
+            },
+            spiritual_indicators: {
+                help: 'Fields update based on the selected section (Spiritual Indicators).',
+                appliesType: 'general',
+                titleTemplate: '{indicator_type}',
+                fields: [
+                    { key: 'indicator_type', label: 'Indicator Type', values: ['Moksha Combination', 'Sanyasa Combination', 'Ketu Link', 'Karakamsha Spirituality'], placeholder: 'Select indicator' },
+                ],
+            },
+        };
+
+        ['marriage_rule', 'career_rule', 'child_birth_rule', 'property_rule', 'foreign_travel_rule', 'health_rule'].forEach((key) => {
+            configs[key] = configs.kp_rule;
+        });
+
+        ['atmakaraka', 'amatyakaraka', 'darakaraka'].forEach((key) => {
+            configs[key] = {
+                help: 'Fields update based on the selected Jaimini karaka section.',
+                appliesType: 'planet',
+                titleTemplate: '{planet} ' + allSectionOptions.find((option) => option.value === key).label,
+                fields: [
+                    { key: 'karaka_type', label: 'Karaka Type', values: jaiminiKarakaTypes, placeholder: 'Select karaka type', width: 6 },
+                    { key: 'planet', label: 'Planet', values: planets, placeholder: 'Select planet', width: 6 },
+                ],
+            };
+        });
+
+        function filterSectionsForSystem() {
+            const allowed = sectionsBySystem[systemField.value] || sectionsBySystem.classical_astrology;
+            const previousValue = sectionField.value;
+            sectionField.innerHTML = allSectionOptions
+                .filter((option) => allowed.includes(option.value))
+                .map((option) => `<option value="${option.value}">${option.label}</option>`)
+                .join('');
+            if (allowed.includes(previousValue)) {
+                sectionField.value = previousValue;
+            } else {
+                sectionField.value = allowed[0] || '';
+            }
+            renderCombinationFields();
+        }
+
+        function activeConfig() {
+            return configs[sectionField.value] || {
+                help: 'Fields update based on the selected section.',
+                appliesType: 'general',
+                fields: [
+                    { key: 'focus', label: 'Research Focus', values: signs.concat(planets), placeholder: 'Select focus' },
+                ],
+            };
+        }
+
+        function updateHiddenMapping() {
+            const config = activeConfig();
+            const selected = {};
+            document.querySelectorAll('.combo-field').forEach((field) => {
+                selected[field.dataset.key] = field.value;
+            });
+
+            const firstValue = Object.values(selected).find((value) => value);
+            const remainingValues = Object.values(selected).filter((value) => value && value !== firstValue);
+            appliesTypeField.value = config.appliesType;
+            appliesNameField.value = firstValue || '';
+            appliesSubtypeField.value = remainingValues.join(' / ');
+            relatedFactorField.value = Object.values(selected).filter(Boolean).join(', ');
+            updateGeneratedTitle(selected, config);
+        }
+
+        function houseNumber(value) {
+            const match = value.match(/\d+/);
+            return match ? Number(match[0]) : null;
+        }
+
+        function updateHouseLordFields() {
+            if (!sectionField.value.startsWith('house_lord_in_')) {
+                return;
+            }
+            const sourceHouse = document.getElementById('combo-source_house');
+            const sourceSign = document.getElementById('combo-source_sign');
+            const lordPlanet = document.getElementById('combo-lord_planet');
+            const placedHouse = document.getElementById('combo-placed_house');
+            const placedSign = document.getElementById('combo-placed_sign');
+            if (!sourceSign || !lordPlanet) {
+                return;
+            }
+
+            lordPlanet.value = signLords[sourceSign.value] || '';
+
+            if (!sourceHouse || !placedHouse || !placedSign) {
+                updateHiddenMapping();
+                return;
+            }
+
+            const sourceIndex = signs.indexOf(sourceSign.value);
+            const sourceHouseNumber = houseNumber(sourceHouse.value);
+            const placedHouseNumber = houseNumber(placedHouse.value);
+            if (sourceIndex >= 0 && sourceHouseNumber && placedHouseNumber) {
+                const offset = placedHouseNumber - sourceHouseNumber;
+                const destinationIndex = (sourceIndex + offset + 12) % 12;
+                placedSign.value = signs[destinationIndex];
+            } else {
+                placedSign.value = '';
+            }
+            updateHiddenMapping();
+        }
+
+        function updateGeneratedTitle(selected, config) {
+            if (!config.titleTemplate) {
+                return;
+            }
+            let generatedTitle = config.titleTemplate;
+            Object.entries(selected).forEach(([key, value]) => {
+                generatedTitle = generatedTitle.replaceAll(`{${key}}`, value || '');
+            });
+            generatedTitle = generatedTitle.replace(/\s+/g, ' ').trim();
+            if (!titleEdited && generatedTitle && !generatedTitle.includes('{}')) {
+                titleField.value = generatedTitle;
+            }
+            if (!shortMeaningField.value && generatedTitle) {
+                shortMeaningField.value = generatedTitle;
+            }
+        }
+
+        function renderCombinationFields() {
+            const config = activeConfig();
+            combinationHelp.textContent = config.help;
+            combinationFields.innerHTML = config.fields.map(fieldHtml).join('');
+            document.querySelectorAll('.combo-field').forEach((field) => {
+                field.addEventListener('change', function () {
+                    updateHouseLordFields();
+                    updateHiddenMapping();
+                });
+            });
+            updateHouseLordFields();
+            updateHiddenMapping();
+        }
+
+        function setConfidenceFromSlider() {
+            const value = Number(confidenceSlider.value);
+            confidenceDisplay.textContent = `${value}/10`;
+            if (value <= 3) {
+                confidenceField.value = 'low';
+            } else if (value <= 7) {
+                confidenceField.value = 'medium';
+            } else {
+                confidenceField.value = 'high';
+            }
+        }
+
+        function setSliderFromConfidence() {
+            if (confidenceField.value === 'low') {
+                confidenceSlider.value = 2;
+            } else if (confidenceField.value === 'high') {
+                confidenceSlider.value = 8;
+            } else {
+                confidenceSlider.value = 5;
+            }
+            setConfidenceFromSlider();
+        }
+
+        function syncLifeAreas() {
+            const values = Array.from(document.querySelectorAll('.research-chip.active')).map((chip) => chip.dataset.value);
+            lifeAreasField.value = values.join(', ');
+        }
+
+        systemField.addEventListener('change', filterSectionsForSystem);
+        sectionField.addEventListener('change', renderCombinationFields);
+        titleField.addEventListener('input', function () {
+            titleEdited = true;
+        });
+        confidenceSlider.addEventListener('input', setConfidenceFromSlider);
+        saveDraftButton.addEventListener('click', function () {
+            statusField.value = 'draft';
+        });
+
+        document.querySelectorAll('.research-chip').forEach((chip) => {
+            const selectedValues = lifeAreasField.value.split(',').map((value) => value.trim()).filter(Boolean);
+            if (selectedValues.includes(chip.dataset.value)) {
+                chip.classList.add('active');
+            }
+            chip.addEventListener('click', function () {
+                chip.classList.toggle('active');
+                syncLifeAreas();
+            });
+        });
+
+        filterSectionsForSystem();
+        setSliderFromConfidence();
+        syncLifeAreas();
+    });
+</script>
+{% endblock %}

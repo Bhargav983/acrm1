@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block title %}Reports | Astrology Research ERP{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <p class="text-muted mb-0">Basic Phase 1 reports for customer, knowledge, verification, remedy, and consultation activity.</p>
+</div>
+
+<section class="page-card p-4">
+    <ul class="nav nav-tabs mb-4" id="reports-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="customer-tab" data-bs-toggle="tab" data-bs-target="#customer-pane" type="button" role="tab" aria-controls="customer-pane" aria-selected="true">Customers</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="knowledge-tab" data-bs-toggle="tab" data-bs-target="#knowledge-pane" type="button" role="tab" aria-controls="knowledge-pane" aria-selected="false">Research Library</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="verification-tab" data-bs-toggle="tab" data-bs-target="#verification-pane" type="button" role="tab" aria-controls="verification-pane" aria-selected="false">Research Tracking</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="remedy-tab" data-bs-toggle="tab" data-bs-target="#remedy-pane" type="button" role="tab" aria-controls="remedy-pane" aria-selected="false">Remedies</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="consultation-tab" data-bs-toggle="tab" data-bs-target="#consultation-pane" type="button" role="tab" aria-controls="consultation-pane" aria-selected="false">Consultations</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="reports-tab-content">
+        <section class="tab-pane fade show active" id="customer-pane" role="tabpanel" aria-labelledby="customer-tab" tabindex="0">
+    <div class="d-flex flex-column flex-lg-row gap-3 justify-content-between mb-3">
+        <div>
+            <h2 class="h5 mb-1">Customer Report</h2>
+            <p class="text-muted mb-0">Filter customer totals and recent records by background fields.</p>
+        </div>
+    </div>
+    <form class="row g-2 align-items-end mb-3" method="get">
+        <div class="col-12 col-md-3">
+            <label class="form-label" for="occupation-filter">Occupation</label>
+            <input class="form-control" id="occupation-filter" name="occupation" value="{{ occupation_filter }}" placeholder="Occupation">
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label" for="education-filter">Education</label>
+            <input class="form-control" id="education-filter" name="education" value="{{ education_filter }}" placeholder="Education">
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label" for="marital-filter">Marital Status</label>
+            <select class="form-select" id="marital-filter" name="marital_status">
+                <option value="">All</option>
+                {% for value, label in marital_status_choices %}
+                    <option value="{{ value }}" {% if marital_status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-3 d-grid">
+            <button class="btn btn-outline-secondary" type="submit">Apply Filters</button>
+        </div>
+    </form>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-6">
+            <div class="border rounded p-3">
+                <div class="text-muted small">Total Customers</div>
+                <div class="fs-3 fw-semibold">{{ total_customers }}</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="border rounded p-3">
+                <div class="text-muted small">Active Customers</div>
+                <div class="fs-3 fw-semibold">{{ active_customers }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Recent Customer</th>
+                    <th>Mobile</th>
+                    <th>Occupation</th>
+                    <th>Education</th>
+                    <th>Marital Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in recent_customers %}
+                    <tr>
+                        <td><a href="{% url 'customers:customer_detail' customer.pk %}">{{ customer.customer_name }}</a></td>
+                        <td>{{ customer.mobile_number|default:"-" }}</td>
+                        <td>{{ customer.occupation|default:"-" }}</td>
+                        <td>{{ customer.education|default:"-" }}</td>
+                        <td>{{ customer.get_marital_status_display }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td class="text-center text-muted py-3" colspan="5">No customers found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+        </section>
+
+        <section class="tab-pane fade" id="knowledge-pane" role="tabpanel" aria-labelledby="knowledge-tab" tabindex="0">
+    <h2 class="h5 mb-3">Research Library Report</h2>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="border rounded p-3">
+                <div class="text-muted small">Total Research Hypotheses</div>
+                <div class="fs-3 fw-semibold">{{ total_knowledge_records }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-3">
+        <div class="col-12 col-xl-4">
+            <h3 class="h6">Count by Category</h3>
+            {% include "core/report_count_table.html" with rows=knowledge_by_category empty_label="No categories found." %}
+        </div>
+        <div class="col-12 col-xl-4">
+            <h3 class="h6">Count by Section</h3>
+            {% include "core/report_count_table.html" with rows=knowledge_by_section empty_label="No sections found." %}
+        </div>
+        <div class="col-12 col-xl-4">
+            <h3 class="h6">Count by Rule Type</h3>
+            {% include "core/report_count_table.html" with rows=knowledge_by_type empty_label="No types found." %}
+        </div>
+    </div>
+        </section>
+
+        <section class="tab-pane fade" id="verification-pane" role="tabpanel" aria-labelledby="verification-tab" tabindex="0">
+    <h2 class="h5 mb-3">Research Tracking Report</h2>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="border rounded p-3">
+                <div class="text-muted small">Total Research Summary Records</div>
+                <div class="fs-3 fw-semibold">{{ total_verifications }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-xl-4">
+            <h3 class="h6">Count by Tracking Type</h3>
+            {% include "core/report_count_table.html" with rows=verifications_by_type empty_label="No tracking types found." %}
+        </div>
+        <div class="col-12 col-xl-4">
+            <h3 class="h6">Count by Status</h3>
+            {% include "core/report_count_table.html" with rows=verifications_by_status empty_label="No statuses found." %}
+        </div>
+        <div class="col-12 col-xl-4">
+            <h3 class="h6">Count by Outcome</h3>
+            {% include "core/report_count_table.html" with rows=verifications_by_outcome empty_label="No outcomes found." %}
+        </div>
+    </div>
+    <h3 class="h6">Recent Research Summaries</h3>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Customer</th>
+                    <th>Research Hypothesis</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Outcome</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in recent_verifications %}
+                    <tr>
+                        <td>{{ item.customer.customer_name }}</td>
+                        <td><a href="{% url 'knowledge:tracking_detail' item.pk %}">{{ item.knowledge.title }}</a></td>
+                        <td>{{ item.get_tracking_type_display }}</td>
+                        <td>{{ item.get_status_display }}</td>
+                        <td>{{ item.get_outcome_display|default:"-" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td class="text-center text-muted py-3" colspan="5">No verification records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+        </section>
+
+        <section class="tab-pane fade" id="remedy-pane" role="tabpanel" aria-labelledby="remedy-tab" tabindex="0">
+    <h2 class="h5 mb-3">Remedy Effectiveness Report</h2>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="border rounded p-3">
+                <div class="text-muted small">Remedy Tracking Records</div>
+                <div class="fs-3 fw-semibold">{{ total_remedies }}</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="border rounded p-3">
+                <div class="text-muted small">Average Effectiveness Rating</div>
+                <div class="fs-3 fw-semibold">{{ average_remedy_rating|floatformat:1|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-xl-6">
+            <h3 class="h6">Count by Status</h3>
+            {% include "core/report_count_table.html" with rows=remedies_by_status empty_label="No remedy statuses found." %}
+        </div>
+        <div class="col-12 col-xl-6">
+            <h3 class="h6">Count by Outcome</h3>
+            {% include "core/report_count_table.html" with rows=remedies_by_outcome empty_label="No remedy outcomes found." %}
+        </div>
+    </div>
+    <h3 class="h6">Recent Remedy Records</h3>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Customer</th>
+                    <th>Research Hypothesis</th>
+                    <th>Status</th>
+                    <th>Outcome</th>
+                    <th>Rating</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in recent_remedies %}
+                    <tr>
+                        <td>{{ item.customer.customer_name }}</td>
+                        <td><a href="{% url 'knowledge:tracking_detail' item.pk %}">{{ item.knowledge.title }}</a></td>
+                        <td>{{ item.get_status_display }}</td>
+                        <td>{{ item.get_outcome_display|default:"-" }}</td>
+                        <td>{{ item.effectiveness_rating|default:"-" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td class="text-center text-muted py-3" colspan="5">No remedy tracking records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+        </section>
+
+        <section class="tab-pane fade" id="consultation-pane" role="tabpanel" aria-labelledby="consultation-tab" tabindex="0">
+    <div class="d-flex flex-column flex-lg-row gap-3 justify-content-between mb-3">
+        <div>
+            <h2 class="h5 mb-1">Consultation Report</h2>
+            <p class="text-muted mb-0">Consultation volume and follow-up workload.</p>
+        </div>
+    </div>
+    <form class="row g-2 align-items-end mb-3" method="get">
+        <input type="hidden" name="occupation" value="{{ occupation_filter }}">
+        <input type="hidden" name="education" value="{{ education_filter }}">
+        <input type="hidden" name="marital_status" value="{{ marital_status_filter }}">
+        <div class="col-12 col-md-4">
+            <label class="form-label" for="consultation-date-filter">Consultation Date</label>
+            <input class="form-control" id="consultation-date-filter" type="date" name="consultation_date" value="{{ consultation_date_filter }}">
+        </div>
+        <div class="col-12 col-md-3 d-grid">
+            <button class="btn btn-outline-secondary" type="submit">Filter Consultations</button>
+        </div>
+    </form>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="border rounded p-3">
+                <div class="text-muted small">Total Consultations</div>
+                <div class="fs-3 fw-semibold">{{ total_consultations }}</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="border rounded p-3">
+                <div class="text-muted small">Follow-ups Required</div>
+                <div class="fs-3 fw-semibold">{{ followups_required }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-3">
+        <div class="col-12 col-xl-6">
+            <h3 class="h6">Upcoming Follow-ups</h3>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Customer</th>
+                            <th>Topic</th>
+                            <th>Follow-up Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in upcoming_followups %}
+                            <tr>
+                                <td><a href="{% url 'consultations:consultation_detail' item.pk %}">{{ item.customer.customer_name }}</a></td>
+                                <td>{{ item.get_topic_display }}</td>
+                                <td>{{ item.follow_up_date|date:"d M Y" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td class="text-center text-muted py-3" colspan="3">No upcoming follow-ups found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-12 col-xl-6">
+            <h3 class="h6">Recent Consultations</h3>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Customer</th>
+                            <th>Topic</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in recent_consultations %}
+                            <tr>
+                                <td><a href="{% url 'consultations:consultation_detail' item.pk %}">{{ item.customer.customer_name }}</a></td>
+                                <td>{{ item.get_topic_display }}</td>
+                                <td>{{ item.consultation_date|date:"d M Y H:i" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td class="text-center text-muted py-3" colspan="3">No consultations found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

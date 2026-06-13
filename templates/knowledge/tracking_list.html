@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Research Tracking | Astrology Research ERP{% endblock %}
+{% block page_title %}Research Tracking{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        <p class="text-muted mb-0">Track prediction verification, remedy progress, research answers, and observations.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'knowledge:tracking_create' %}">Add Research Summary</a>
+</div>
+
+<section class="page-card p-3 mb-3">
+    <form class="row g-2 align-items-end" method="get">
+        <div class="col-12 col-xl-3">
+            <label class="form-label" for="tracking-search">Search</label>
+            <input class="form-control" id="tracking-search" type="search" name="q" value="{{ search_query }}" placeholder="Customer or knowledge title">
+        </div>
+        <div class="col-12 col-md-6 col-xl-2">
+            <label class="form-label" for="tracking-type-filter">Tracking Type</label>
+            <select class="form-select" id="tracking-type-filter" name="tracking_type">
+                <option value="">All Types</option>
+                {% for value, label in tracking_type_choices %}
+                    <option value="{{ value }}" {% if tracking_type_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-2">
+            <label class="form-label" for="status-filter">Status</label>
+            <select class="form-select" id="status-filter" name="status">
+                <option value="">All Statuses</option>
+                {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-2">
+            <label class="form-label" for="outcome-filter">Outcome</label>
+            <select class="form-select" id="outcome-filter" name="outcome">
+                <option value="">All Outcomes</option>
+                {% for value, label in outcome_choices %}
+                    <option value="{{ value }}" {% if outcome_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-3 col-xl-1">
+            <label class="form-label" for="active-filter">Active</label>
+            <select class="form-select" id="active-filter" name="active">
+                <option value="active" {% if active_filter == "active" %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if active_filter == "inactive" %}selected{% endif %}>Inactive</option>
+                <option value="all" {% if active_filter == "all" %}selected{% endif %}>All</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3 col-xl-2 d-grid">
+            <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        </div>
+    </form>
+</section>
+
+<section class="page-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Customer</th>
+                    <th>Research Hypothesis</th>
+                    <th>Tracking Type</th>
+                    <th>Status</th>
+                    <th>Outcome</th>
+                    <th>Verified Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tracking in tracking_records %}
+                    <tr>
+                        <td>
+                            <a class="fw-semibold text-decoration-none" href="{% url 'knowledge:tracking_detail' tracking.pk %}">
+                                {{ tracking.customer.customer_name }}
+                            </a>
+                            {% if not tracking.is_active %}
+                                <span class="badge text-bg-secondary ms-1">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ tracking.knowledge.title }}</td>
+                        <td>{{ tracking.get_tracking_type_display }}</td>
+                        <td>{{ tracking.get_status_display }}</td>
+                        <td>{{ tracking.get_outcome_display|default:"-" }}</td>
+                        <td>{{ tracking.verified_date|date:"d M Y"|default:"-" }}</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" href="{% url 'knowledge:tracking_detail' tracking.pk %}">View</a>
+                            <a class="btn btn-sm btn-outline-primary" href="{% url 'knowledge:tracking_update' tracking.pk %}">Edit</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td class="text-center text-muted py-4" colspan="7">No verification records found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Deactivate Astrology Data | Astrology Research ERP{% endblock %}
+{% block page_title %}Deactivate Astrology Data{% endblock %}
+
+{% block content %}
+<section class="page-card p-4">
+    <h2 class="h5 mb-2">Deactivate astrology data for {{ api_data.customer.customer_name }}?</h2>
+    <p class="text-muted">
+        This keeps the record for research history but removes it from the active Astrology Data list.
+    </p>
+    <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <a class="btn btn-outline-secondary" href="{% url 'customers:api_data_detail' api_data.pk %}">Cancel</a>
+        <button class="btn btn-danger" type="submit">Deactivate</button>
+    </form>
+</section>
+{% endblock %}

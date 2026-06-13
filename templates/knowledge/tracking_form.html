@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | Astrology Research ERP{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<form method="post" class="page-card p-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-start mb-4">
+        <div>
+            <h2 class="h5 mb-1">Research Summary / Final Result</h2>
+            <p class="text-muted mb-0">Record verification results, remedy tracking, research answers, and observations.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="{% url 'knowledge:tracking_list' %}">Back</a>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="tracking-form-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tracking-basic-tab" data-bs-toggle="tab" data-bs-target="#tracking-basic-pane" type="button" role="tab">Basic</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tracking-questions-tab" data-bs-toggle="tab" data-bs-target="#tracking-questions-pane" type="button" role="tab">Verification Questions</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tracking-result-tab" data-bs-toggle="tab" data-bs-target="#tracking-result-pane" type="button" role="tab">Result & Dates</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tracking-notes-tab" data-bs-toggle="tab" data-bs-target="#tracking-notes-pane" type="button" role="tab">Notes & Audit</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <section class="tab-pane fade show active" id="tracking-basic-pane" role="tabpanel" tabindex="0">
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="{{ form.customer.id_for_label }}">Customer</label>
+                    {{ form.customer }}
+                    {{ form.customer.errors }}
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="{{ form.knowledge.id_for_label }}">Research Hypothesis</label>
+                    {{ form.knowledge }}
+                    {{ form.knowledge.errors }}
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="{{ form.tracking_type.id_for_label }}">Tracking Type</label>
+                    {{ form.tracking_type }}
+                    {{ form.tracking_type.errors }}
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="{{ form.status.id_for_label }}">Final Result</label>
+                    {{ form.status }}
+                    {{ form.status.errors }}
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="{{ form.outcome.id_for_label }}">Outcome</label>
+                    {{ form.outcome }}
+                    {{ form.outcome.errors }}
+                </div>
+                <div class="col-12">
+                    <a class="btn btn-outline-primary" id="load-questions-link" href="{% url 'knowledge:tracking_create' %}">Load Questions</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="tracking-questions-pane" role="tabpanel" tabindex="0">
+            {% if answer_form.non_field_errors %}
+                <div class="alert alert-danger">{{ answer_form.non_field_errors }}</div>
+            {% endif %}
+            {% if question_fields %}
+                <div class="row g-3 mb-4">
+                    {% for question, answer_field, notes_field in question_fields %}
+                        <div class="col-12">
+                            <div class="border rounded p-3 bg-light">
+                                <div class="d-flex flex-column flex-md-row gap-2 justify-content-between mb-2">
+                                    <div>
+                                        <div class="fw-semibold">{{ question.question_text }}</div>
+                                        <div class="small text-muted">{{ question.get_question_type_display }}</div>
+                                    </div>
+                                    <span class="badge text-bg-light border align-self-start">#{{ question.sort_order }}</span>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-12 col-lg-6">
+                                        <label class="form-label" for="{{ answer_field.id_for_label }}">Answer</label>
+                                        {{ answer_field }}
+                                        {{ answer_field.errors }}
+                                    </div>
+                                    <div class="col-12 col-lg-6">
+                                        <label class="form-label" for="{{ notes_field.id_for_label }}">Notes</label>
+                                        {{ notes_field }}
+                                        {{ notes_field.errors }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center text-muted py-4 border rounded bg-light mb-4">
+                    Select a customer and research hypothesis, then load questions.
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="tab-pane fade" id="tracking-result-pane" role="tabpanel" tabindex="0">
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-3">
+                    <label class="form-label" for="{{ form.start_date.id_for_label }}">Start Date</label>
+                    {{ form.start_date }}
+                    {{ form.start_date.errors }}
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label" for="{{ form.end_date.id_for_label }}">End Date</label>
+                    {{ form.end_date }}
+                    {{ form.end_date.errors }}
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label" for="{{ form.follow_up_date.id_for_label }}">Follow Up Date</label>
+                    {{ form.follow_up_date }}
+                    {{ form.follow_up_date.errors }}
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label" for="{{ form.effectiveness_rating.id_for_label }}">Effectiveness Rating</label>
+                    {{ form.effectiveness_rating }}
+                    {{ form.effectiveness_rating.errors }}
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="tracking-notes-pane" role="tabpanel" tabindex="0">
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-xl-6">
+                    <label class="form-label" for="{{ form.customer_feedback.id_for_label }}">Customer Feedback</label>
+                    {{ form.customer_feedback }}
+                    {{ form.customer_feedback.errors }}
+                </div>
+                <div class="col-12 col-xl-6">
+                    <label class="form-label" for="{{ form.researcher_notes.id_for_label }}">Researcher Notes</label>
+                    {{ form.researcher_notes }}
+                    {{ form.researcher_notes.errors }}
+                </div>
+                <div class="col-12 col-md-5">
+                    <label class="form-label" for="{{ form.verified_by.id_for_label }}">Verified By</label>
+                    {{ form.verified_by }}
+                    {{ form.verified_by.errors }}
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="{{ form.verified_date.id_for_label }}">Verified Date</label>
+                    {{ form.verified_date }}
+                    {{ form.verified_date.errors }}
+                </div>
+                <div class="col-12 col-md-3 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                        {{ form.is_active.errors }}
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end">
+        <a class="btn btn-outline-secondary" href="{% url 'knowledge:tracking_list' %}">Cancel</a>
+        <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+    </div>
+</form>
+
+<script>
+    (() => {
+        const customerField = document.getElementById('{{ form.customer.id_for_label }}');
+        const knowledgeField = document.getElementById('{{ form.knowledge.id_for_label }}');
+        const loadLink = document.getElementById('load-questions-link');
+        const baseUrl = "{{ request.path }}";
+
+        function updateLoadLink() {
+            const params = new URLSearchParams();
+            if (customerField.value) {
+                params.set('customer', customerField.value);
+            }
+            if (knowledgeField.value) {
+                params.set('knowledge', knowledgeField.value);
+            }
+            loadLink.href = `${baseUrl}?${params.toString()}`;
+            loadLink.classList.toggle('disabled', !(customerField.value && knowledgeField.value));
+        }
+
+        customerField.addEventListener('change', updateLoadLink);
+        knowledgeField.addEventListener('change', updateLoadLink);
+        updateLoadLink();
+    })();
+</script>
+{% endblock %}

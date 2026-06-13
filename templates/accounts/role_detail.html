@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}{{ role.role_name }} | Astrology Research ERP{% endblock %}
+{% block page_title %}{{ role.role_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
+    <div>
+        {% if role.is_active %}
+            <span class="badge text-bg-success">Active</span>
+        {% else %}
+            <span class="badge text-bg-secondary">Inactive</span>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'accounts:role_list' %}">Back</a>
+        <a class="btn btn-primary" href="{% url 'accounts:role_update' role.pk %}">Edit</a>
+        {% if role.is_active %}
+            <a class="btn btn-outline-danger" href="{% url 'accounts:role_deactivate' role.pk %}">Deactivate</a>
+        {% endif %}
+    </div>
+</div>
+
+<section class="page-card p-4">
+    <h2 class="h5 mb-3">Role Details</h2>
+    <div class="mb-3">
+        <div class="text-muted small">Description</div>
+        <div>{{ role.description|linebreaksbr|default:"-" }}</div>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-3"><div class="text-muted small">Can View</div><div>{% if role.can_view %}Yes{% else %}No{% endif %}</div></div>
+        <div class="col-md-3"><div class="text-muted small">Can Add</div><div>{% if role.can_add %}Yes{% else %}No{% endif %}</div></div>
+        <div class="col-md-3"><div class="text-muted small">Can Edit</div><div>{% if role.can_edit %}Yes{% else %}No{% endif %}</div></div>
+        <div class="col-md-3"><div class="text-muted small">Can Delete</div><div>{% if role.can_delete %}Yes{% else %}No{% endif %}</div></div>
+    </div>
+</section>
+{% endblock %}

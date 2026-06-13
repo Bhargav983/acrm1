@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Deactivate Research Hypothesis | Astrology Research ERP{% endblock %}
+{% block page_title %}Deactivate Research Hypothesis{% endblock %}
+
+{% block content %}
+<section class="page-card p-4">
+    <h2 class="h5 mb-2">Deactivate {{ knowledge.title }}?</h2>
+    <p class="text-muted">
+        This keeps the research hypothesis for history but removes it from the active list.
+    </p>
+    <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <a class="btn btn-outline-secondary" href="{% url 'knowledge:knowledge_detail' knowledge.pk %}">Cancel</a>
+        <button class="btn btn-danger" type="submit">Deactivate</button>
+    </form>
+</section>
+{% endblock %}

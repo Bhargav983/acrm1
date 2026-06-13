@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | Astrology Research ERP{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<form method="post" class="page-card p-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-start mb-4">
+        <div>
+            <p class="text-muted mb-0">Store customer astrology values. No calculations are performed here.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="{% url 'customers:api_data_list' %}">Back</a>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="api-data-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="api-basic-tab" data-bs-toggle="tab" data-bs-target="#api-basic-pane" type="button" role="tab">Basic</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="api-summary-tab" data-bs-toggle="tab" data-bs-target="#api-summary-pane" type="button" role="tab">Astrology Values</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="api-notes-tab" data-bs-toggle="tab" data-bs-target="#api-notes-pane" type="button" role="tab">Notes</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <section class="tab-pane fade show active" id="api-basic-pane" role="tabpanel" tabindex="0">
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-8">
+                    <label class="form-label" for="{{ form.customer.id_for_label }}">Customer</label>
+                    {{ form.customer }}
+                    {{ form.customer.errors }}
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="{{ form.data_source.id_for_label }}">Data Source</label>
+                    {{ form.data_source }}
+                    {{ form.data_source.errors }}
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                        {{ form.is_active.errors }}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="api-summary-pane" role="tabpanel" tabindex="0">
+            <ul class="nav nav-pills gap-2 mb-4" id="api-value-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="value-basic-tab" data-bs-toggle="pill" data-bs-target="#value-basic-pane" type="button" role="tab">Basic</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="value-planet-sign-tab" data-bs-toggle="pill" data-bs-target="#value-planet-sign-pane" type="button" role="tab">Planet in Sign</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="value-planet-house-tab" data-bs-toggle="pill" data-bs-target="#value-planet-house-pane" type="button" role="tab">Planet in House</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="value-planet-nakshatra-tab" data-bs-toggle="pill" data-bs-target="#value-planet-nakshatra-pane" type="button" role="tab">Planet in Nakshatra</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="value-house-lord-tab" data-bs-toggle="pill" data-bs-target="#value-house-lord-pane" type="button" role="tab">House Lord in House</button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <section class="tab-pane fade show active" id="value-basic-pane" role="tabpanel" tabindex="0">
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label" for="{{ form.lagna.id_for_label }}">Lagna</label>
+                            {{ form.lagna }}
+                            {{ form.lagna.errors }}
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label" for="{{ form.moon_sign.id_for_label }}">Moon Sign</label>
+                            {{ form.moon_sign }}
+                            {{ form.moon_sign.errors }}
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label" for="{{ form.sun_sign.id_for_label }}">Sun Sign</label>
+                            {{ form.sun_sign }}
+                            {{ form.sun_sign.errors }}
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label" for="{{ form.nakshatra.id_for_label }}">Nakshatra</label>
+                            {{ form.nakshatra }}
+                            {{ form.nakshatra.errors }}
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label class="form-label" for="{{ form.pada.id_for_label }}">Pada</label>
+                            {{ form.pada }}
+                            {{ form.pada.errors }}
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label" for="{{ form.current_mahadasha.id_for_label }}">Mahadasha</label>
+                            {{ form.current_mahadasha }}
+                            {{ form.current_mahadasha.errors }}
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label" for="{{ form.current_antardasha.id_for_label }}">Antardasha</label>
+                            {{ form.current_antardasha }}
+                            {{ form.current_antardasha.errors }}
+                        </div>
+                    </div>
+                </section>
+
+                <section class="tab-pane fade" id="value-planet-sign-pane" role="tabpanel" tabindex="0">
+                    <div class="table-responsive mb-4">
+                        <table class="table table-sm align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 18%;">Planet</th>
+                                    <th>Sign</th>
+                                    <th style="width: 20%;">Sign Lord</th>
+                                    <th style="width: 20%;">Relationship</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in form.planet_sign_rows %}
+                                    <tr>
+                                        <td class="fw-semibold">{{ row.planet }}</td>
+                                        <td>
+                                            {{ row.sign }}
+                                            {{ row.sign.errors }}
+                                        </td>
+                                        <td>
+                                            {{ row.lord }}
+                                            {{ row.lord.errors }}
+                                        </td>
+                                        <td>
+                                            {{ row.relationship }}
+                                            {{ row.relationship.errors }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="tab-pane fade" id="value-planet-house-pane" role="tabpanel" tabindex="0">
+                    <div class="table-responsive mb-4">
+                        <table class="table table-sm align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 30%;">Planet</th>
+                                    <th>House</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in form.planet_house_rows %}
+                                    <tr>
+                                        <td class="fw-semibold">{{ row.planet }}</td>
+                                        <td>
+                                            {{ row.house }}
+                                            {{ row.house.errors }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="tab-pane fade" id="value-planet-nakshatra-pane" role="tabpanel" tabindex="0">
+                    <div class="table-responsive mb-4">
+                        <table class="table table-sm align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 16%;">Planet</th>
+                                    <th>Nakshatra</th>
+                                    <th style="width: 16%;">Pada</th>
+                                    <th style="width: 16%;">Owner</th>
+                                    <th style="width: 16%;">Relationship</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in form.planet_nakshatra_rows %}
+                                    <tr>
+                                        <td class="fw-semibold">{{ row.planet }}</td>
+                                        <td>
+                                            {{ row.nakshatra }}
+                                            {{ row.nakshatra.errors }}
+                                        </td>
+                                        <td>
+                                            {{ row.pada }}
+                                            {{ row.pada.errors }}
+                                        </td>
+                                        <td>
+                                            {{ row.owner }}
+                                            {{ row.owner.errors }}
+                                        </td>
+                                        <td>
+                                            {{ row.relationship }}
+                                            {{ row.relationship.errors }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="tab-pane fade" id="value-house-lord-pane" role="tabpanel" tabindex="0">
+                    <div class="table-responsive mb-4">
+                        <table class="table table-sm align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 14%;">House</th>
+                                    <th>Sign</th>
+                                    <th>Lord</th>
+                                    <th>Goes To House</th>
+                                    <th>Destination Sign</th>
+                                    <th>Relationship</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in form.house_lord_rows %}
+                                    <tr>
+                                        <td class="fw-semibold">{{ row.house }}</td>
+                                        <td>
+                                            {{ row.source_sign }}
+                                            {{ row.source_sign.errors }}
+                                        </td>
+                                        <td>
+                                            {{ row.lord_planet }}
+                                            {{ row.lord_planet.errors }}
+                                        </td>
+                                        <td>
+                                            {{ row.destination_house }}
+                                            {{ row.destination_house.errors }}
+                                        </td>
+                                        <td>
+                                            {{ row.destination_sign }}
+                                            {{ row.destination_sign.errors }}
+                                        </td>
+                                        <td>
+                                            {{ row.relationship }}
+                                            {{ row.relationship.errors }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="api-notes-pane" role="tabpanel" tabindex="0">
+            <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <label class="form-label" for="{{ form.notes.id_for_label }}">Notes</label>
+                    {{ form.notes }}
+                    {{ form.notes.errors }}
+                    <div class="form-text">Use this for manual observations, source comments, or anything that helps explain the astrology values.</div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end">
+        <a class="btn btn-outline-secondary" href="{% url 'customers:api_data_list' %}">Cancel</a>
+        <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+    </div>
+</form>
+<script>
+    (() => {
+        const signLords = {
+            Aries: 'Mars',
+            Taurus: 'Venus',
+            Gemini: 'Mercury',
+            Cancer: 'Moon',
+            Leo: 'Sun',
+            Virgo: 'Mercury',
+            Libra: 'Venus',
+            Scorpio: 'Mars',
+            Sagittarius: 'Jupiter',
+            Capricorn: 'Saturn',
+            Aquarius: 'Saturn',
+            Pisces: 'Jupiter',
+        };
+        const nakshatraLords = {
+            Ashwini: 'Ketu',
+            Bharani: 'Venus',
+            Krittika: 'Sun',
+            Rohini: 'Moon',
+            Mrigashira: 'Mars',
+            Ardra: 'Rahu',
+            Punarvasu: 'Jupiter',
+            Pushya: 'Saturn',
+            Ashlesha: 'Mercury',
+            Magha: 'Ketu',
+            'Purva Phalguni': 'Venus',
+            'Uttara Phalguni': 'Sun',
+            Hasta: 'Moon',
+            Chitra: 'Mars',
+            Swati: 'Rahu',
+            Vishakha: 'Jupiter',
+            Anuradha: 'Saturn',
+            Jyeshtha: 'Mercury',
+            Mula: 'Ketu',
+            'Purva Ashadha': 'Venus',
+            'Uttara Ashadha': 'Sun',
+            Shravana: 'Moon',
+            Dhanishta: 'Mars',
+            Shatabhisha: 'Rahu',
+            'Purva Bhadrapada': 'Jupiter',
+            'Uttara Bhadrapada': 'Saturn',
+            Revati: 'Mercury',
+        };
+        const planetLabels = {
+            sun: 'Sun',
+            moon: 'Moon',
+            mars: 'Mars',
+            mercury: 'Mercury',
+            jupiter: 'Jupiter',
+            venus: 'Venus',
+            saturn: 'Saturn',
+            rahu: 'Rahu',
+            ketu: 'Ketu',
+        };
+        const planetRelationships = {
+            Sun: { friends: ['Moon', 'Mars', 'Jupiter'], enemies: ['Venus', 'Saturn', 'Rahu', 'Ketu'] },
+            Moon: { friends: ['Sun', 'Mercury'], enemies: [] },
+            Mars: { friends: ['Sun', 'Moon', 'Jupiter'], enemies: ['Mercury', 'Rahu', 'Ketu'] },
+            Mercury: { friends: ['Sun', 'Venus'], enemies: ['Moon'] },
+            Jupiter: { friends: ['Sun', 'Moon', 'Mars'], enemies: ['Mercury', 'Venus', 'Rahu', 'Ketu'] },
+            Venus: { friends: ['Mercury', 'Saturn'], enemies: ['Sun', 'Moon'] },
+            Saturn: { friends: ['Mercury', 'Venus'], enemies: ['Sun', 'Moon', 'Mars'] },
+            Rahu: { friends: ['Mercury', 'Venus', 'Saturn'], enemies: ['Sun', 'Moon', 'Mars'] },
+            Ketu: { friends: ['Mars', 'Venus', 'Saturn'], enemies: ['Sun', 'Moon'] },
+        };
+        const signOrder = [
+            'Aries',
+            'Taurus',
+            'Gemini',
+            'Cancer',
+            'Leo',
+            'Virgo',
+            'Libra',
+            'Scorpio',
+            'Sagittarius',
+            'Capricorn',
+            'Aquarius',
+            'Pisces',
+        ];
+
+        function houseNumber(value) {
+            const match = String(value || '').match(/\d+/);
+            return match ? Number(match[0]) : null;
+        }
+
+        function signFromHouse(sourceSign, destinationHouse) {
+            const startIndex = signOrder.indexOf(sourceSign);
+            const house = houseNumber(destinationHouse);
+            if (startIndex === -1 || !house) {
+                return '';
+            }
+            return signOrder[(startIndex + house - 1) % signOrder.length];
+        }
+
+        function planetRelationship(planet, otherPlanet) {
+            if (!planet || !otherPlanet) {
+                return '';
+            }
+            if (planet === otherPlanet) {
+                return 'Own';
+            }
+            const relationship = planetRelationships[planet] || {};
+            if ((relationship.friends || []).includes(otherPlanet)) {
+                return 'Friend';
+            }
+            if ((relationship.enemies || []).includes(otherPlanet)) {
+                return 'Enemy';
+            }
+            return 'Neutral';
+        }
+
+        document.querySelectorAll('select[name^="planet_sign_"]:not([name$="_lord"]):not([name$="_relationship"])').forEach((signField) => {
+            const slug = signField.name.replace('planet_sign_', '');
+            const lordField = document.querySelector(`[name="planet_sign_${slug}_lord"]`);
+            const relationshipField = document.querySelector(`[name="planet_sign_${slug}_relationship"]`);
+            const syncPlanetSignRow = () => {
+                const signLord = signLords[signField.value] || '';
+                if (lordField) {
+                    lordField.value = signLord;
+                }
+                if (relationshipField) {
+                    relationshipField.value = planetRelationship(planetLabels[slug], signLord);
+                }
+            };
+            signField.addEventListener('change', syncPlanetSignRow);
+            syncPlanetSignRow();
+        });
+
+        document.querySelectorAll('select[name^="planet_nakshatra_"]:not([name$="_pada"])').forEach((nakshatraField) => {
+            const slug = nakshatraField.name.replace('planet_nakshatra_', '');
+            const ownerField = document.querySelector(`[name="planet_nakshatra_${slug}_owner"]`);
+            const relationshipField = document.querySelector(`[name="planet_nakshatra_${slug}_relationship"]`);
+            const syncNakshatraRow = () => {
+                const owner = nakshatraLords[nakshatraField.value] || '';
+                if (ownerField) {
+                    ownerField.value = owner;
+                }
+                if (relationshipField) {
+                    relationshipField.value = planetRelationship(planetLabels[slug], owner);
+                }
+            };
+            nakshatraField.addEventListener('change', syncNakshatraRow);
+            syncNakshatraRow();
+        });
+
+        document.querySelectorAll('select[name^="house_lord_"][name$="_source_sign"]').forEach((sourceSign) => {
+            const lordFieldName = sourceSign.name.replace('_source_sign', '_lord_planet');
+            const destinationHouseFieldName = sourceSign.name.replace('_source_sign', '_destination_house');
+            const destinationSignFieldName = sourceSign.name.replace('_source_sign', '_destination_sign');
+            const relationshipFieldName = sourceSign.name.replace('_source_sign', '_relationship');
+            const lordField = document.querySelector(`[name="${lordFieldName}"]`);
+            const destinationHouseField = document.querySelector(`[name="${destinationHouseFieldName}"]`);
+            const destinationSignField = document.querySelector(`[name="${destinationSignFieldName}"]`);
+            const relationshipField = document.querySelector(`[name="${relationshipFieldName}"]`);
+            const syncHouseLordRow = () => {
+                if (lordField) {
+                    lordField.value = signLords[sourceSign.value] || '';
+                }
+                if (destinationSignField && destinationHouseField) {
+                    destinationSignField.value = signFromHouse(sourceSign.value, destinationHouseField.value);
+                }
+                if (relationshipField && lordField && destinationSignField) {
+                    relationshipField.value = planetRelationship(
+                        lordField.value,
+                        signLords[destinationSignField.value] || ''
+                    );
+                }
+            };
+            sourceSign.addEventListener('change', syncHouseLordRow);
+            if (destinationHouseField) {
+                destinationHouseField.addEventListener('change', syncHouseLordRow);
+            }
+            syncHouseLordRow();
+        });
+    })();
+</script>
+{% endblock %}

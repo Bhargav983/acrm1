@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Login | Astrology Research ERP{% endblock %}
+
+{% block body %}
+<main class="min-vh-100 d-flex align-items-center justify-content-center bg-light px-3">
+    <div class="card border-0 shadow-sm" style="width: 100%; max-width: 420px;">
+        <div class="card-body p-4">
+            <div class="mb-4">
+                <div class="text-muted small">Astrology Research ERP</div>
+                <h1 class="h4 mb-0">Sign in</h1>
+            </div>
+
+            {% if form.errors %}
+                <div class="alert alert-danger" role="alert">
+                    Please enter a valid username and password.
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
+                    <input
+                        type="text"
+                        name="{{ form.username.html_name }}"
+                        id="{{ form.username.id_for_label }}"
+                        class="form-control"
+                        required
+                        autofocus
+                    >
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.password.id_for_label }}">Password</label>
+                    <input
+                        type="password"
+                        name="{{ form.password.html_name }}"
+                        id="{{ form.password.id_for_label }}"
+                        class="form-control"
+                        required
+                    >
+                </div>
+                <button class="btn btn-primary w-100" type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+</main>
+{% endblock %}

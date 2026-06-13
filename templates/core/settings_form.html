@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | Astrology Research ERP{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<form method="post" class="page-card p-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-start mb-4">
+        <div>
+            <h2 class="h5 mb-1">Setting Option</h2>
+            <p class="text-muted mb-0">Use one flexible master table for dropdown values across the app.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="{% url 'core:settings_list' %}">Back</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <label class="form-label" for="{{ form.setting_type.id_for_label }}">Setting Type</label>
+            {{ form.setting_type }}
+            {{ form.setting_type.errors }}
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label" for="{{ form.name.id_for_label }}">Name</label>
+            {{ form.name }}
+            {{ form.name.errors }}
+            <div class="form-text">Use the stored value, for example prediction or Business.</div>
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label" for="{{ form.sort_order.id_for_label }}">Sort Order</label>
+            {{ form.sort_order }}
+            {{ form.sort_order.errors }}
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+            {{ form.description }}
+            {{ form.description.errors }}
+            <div class="form-text">Description is used as the user-facing dropdown label when available.</div>
+        </div>
+        <div class="col-12">
+            <div class="form-check">
+                {{ form.is_active }}
+                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                {{ form.is_active.errors }}
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end">
+        <a class="btn btn-outline-secondary" href="{% url 'core:settings_list' %}">Cancel</a>
+        <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+    </div>
+</form>
+{% endblock %}
