@@ -75,7 +75,11 @@
                 </div>
                 <div class="col-12 col-md-6">
                     <label class="form-label" for="{{ form.place_of_birth.id_for_label }}">Place of Birth</label>
-                    {{ form.place_of_birth }}
+                    <div class="position-relative">
+                        {{ form.place_of_birth }}
+                        <div class="list-group position-absolute w-100 shadow-sm d-none" id="place-suggestions" style="z-index: 1050; max-height: 280px; overflow-y: auto;"></div>
+                    </div>
+                    <div class="form-text" id="place-search-status">Start typing a city or place name, then select a result.</div>
                     {{ form.place_of_birth.errors }}
                 </div>
                 <div class="col-12 col-md-4">
@@ -141,6 +145,14 @@
         const tabs = Array.from(document.querySelectorAll('#customer-form-tabs button[data-bs-toggle="tab"]'));
         const previousButton = document.getElementById('customer-tab-prev');
         const nextButton = document.getElementById('customer-tab-next');
+        const placeInput = document.getElementById('{{ form.place_of_birth.id_for_label }}');
+        const latitudeInput = document.getElementById('{{ form.latitude.id_for_label }}');
+        const longitudeInput = document.getElementById('{{ form.longitude.id_for_label }}');
+        const timezoneInput = document.getElementById('{{ form.timezone.id_for_label }}');
+        const suggestions = document.getElementById('place-suggestions');
+        const placeStatus = document.getElementById('place-search-status');
+        let searchTimer = null;
+        let activeController = null;
 
         function activeIndex() {
             return tabs.findIndex((tab) => tab.classList.contains('active'));
@@ -172,6 +184,101 @@
         });
 
         updateButtons();
+
+        function hideSuggestions() {
+            suggestions.classList.add('d-none');
+            suggestions.innerHTML = '';
+        }
+
+        function ensureTimezoneOption(value) {
+            if (!timezoneInput || !value) {
+                return;
+            }
+            const exists = Array.from(timezoneInput.options || []).some((option) => option.value === value);
+            if (!exists && timezoneInput.tagName === 'SELECT') {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                timezoneInput.appendChild(option);
+            }
+            timezoneInput.value = value;
+        }
+
+        function selectLocation(location) {
+            placeInput.value = location.complete_name || location.label || location.location_name || placeInput.value;
+            latitudeInput.value = location.latitude || '';
+            longitudeInput.value = location.longitude || '';
+            ensureTimezoneOption(String(location.timezone_offset || location.timezone || ''));
+            placeStatus.textContent = 'Location selected. Latitude, longitude, and timezone were filled automatically.';
+            hideSuggestions();
+        }
+
+        function renderSuggestions(results) {
+            suggestions.innerHTML = '';
+            if (!results.length) {
+                suggestions.innerHTML = '<div class="list-group-item text-muted">No matching locations found.</div>';
+                suggestions.classList.remove('d-none');
+                return;
+            }
+            results.forEach((location) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'list-group-item list-group-item-action';
+                button.innerHTML = `
+                    <div class="fw-semibold">${location.label || location.location_name}</div>
+                    <div class="small text-muted">${location.latitude}, ${location.longitude} | ${location.timezone || ''}</div>
+                `;
+                button.addEventListener('click', () => selectLocation(location));
+                suggestions.appendChild(button);
+            });
+            suggestions.classList.remove('d-none');
+        }
+
+        function searchLocation() {
+            const query = placeInput.value.trim();
+            if (query.length < 3) {
+                placeStatus.textContent = 'Start typing a city or place name, then select a result.';
+                hideSuggestions();
+                return;
+            }
+            if (activeController) {
+                activeController.abort();
+            }
+            activeController = new AbortController();
+            placeStatus.textContent = 'Searching locations...';
+            fetch(`{% url 'customers:customer_location_search' %}?q=${encodeURIComponent(query)}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                signal: activeController.signal,
+            })
+                .then((response) => response.json().then((data) => ({ ok: response.ok, data })))
+                .then(({ ok, data }) => {
+                    if (!ok) {
+                        placeStatus.textContent = data.error || 'Location search failed.';
+                        hideSuggestions();
+                        return;
+                    }
+                    placeStatus.textContent = 'Select a matching location from the list.';
+                    renderSuggestions(data.results || []);
+                })
+                .catch((error) => {
+                    if (error.name === 'AbortError') {
+                        return;
+                    }
+                    placeStatus.textContent = 'Location search failed. You can still enter details manually.';
+                    hideSuggestions();
+                });
+        }
+
+        placeInput.addEventListener('input', function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(searchLocation, 500);
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!suggestions.contains(event.target) && event.target !== placeInput) {
+                hideSuggestions();
+            }
+        });
     });
 </script>
 {% endblock %}

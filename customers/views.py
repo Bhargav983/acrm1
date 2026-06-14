@@ -1,10 +1,53 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import APIDataForm, ASTROLOGY_PLANETS, HOUSE_NUMBERS, CustomerForm
 from .models import APIData, Customer
+from .services import (
+    FreeAstrologyAPIError,
+    chart_positions_from_output,
+    create_astrology_data_from_api,
+    current_dasha_from_rows,
+    dasha_rows_from_output,
+    fetch_geo_details,
+    search_geo_locations,
+)
+
+SOUTH_INDIAN_SIGN_GRID = (
+    (12, 1, 2, 3),
+    (11, None, None, 4),
+    (10, None, None, 5),
+    (9, 8, 7, 6),
+)
+SIGN_NAMES = {
+    1: 'Aries',
+    2: 'Taurus',
+    3: 'Gemini',
+    4: 'Cancer',
+    5: 'Leo',
+    6: 'Virgo',
+    7: 'Libra',
+    8: 'Scorpio',
+    9: 'Sagittarius',
+    10: 'Capricorn',
+    11: 'Aquarius',
+    12: 'Pisces',
+}
+PLANET_ABBREVIATIONS = {
+    'Ascendant': 'As',
+    'Sun': 'Su',
+    'Moon': 'Mo',
+    'Mars': 'Ma',
+    'Mercury': 'Me',
+    'Jupiter': 'Ju',
+    'Venus': 'Ve',
+    'Saturn': 'Sa',
+    'Rahu': 'Ra',
+    'Ketu': 'Ke',
+}
 
 
 def build_api_manual_entry_rows(api_data):
@@ -74,6 +117,108 @@ def build_api_manual_entry_rows(api_data):
             or row['relationship']
             for row in house_lord_rows
         ),
+    }
+
+
+def extract_response_output(api_data, parsed_key, raw_key):
+    parsed_response = api_data.parsed_response if isinstance(api_data.parsed_response, dict) else {}
+    output = parsed_response.get(parsed_key, {})
+    if isinstance(output, dict) and output:
+        return output
+
+    raw_response = api_data.raw_api_response if isinstance(api_data.raw_api_response, dict) else {}
+    raw_value = raw_response.get(raw_key, {})
+    if isinstance(raw_value, dict):
+        candidate = raw_value.get('output', raw_value)
+        if isinstance(candidate, dict):
+            return candidate
+    return {}
+
+
+def build_south_indian_chart(api_data, chart_key):
+    parsed_response = api_data.parsed_response if isinstance(api_data.parsed_response, dict) else {}
+    charts = parsed_response.get('charts', {}) if isinstance(parsed_response.get('charts', {}), dict) else {}
+    positions = charts.get(chart_key, [])
+
+    if not positions:
+        if chart_key == 'd1':
+            positions = chart_positions_from_output(
+                extract_response_output(api_data, 'planets_extended', 'planets_extended')
+            )
+        elif chart_key == 'd9':
+            positions = chart_positions_from_output(
+                extract_response_output(api_data, 'navamsa_chart_info', 'navamsa_chart_info')
+            )
+
+    sign_planets = {sign: [] for sign in SIGN_NAMES}
+    for position in positions:
+        if not isinstance(position, dict):
+            continue
+        sign = position.get('current_sign')
+        try:
+            sign = int(sign)
+        except (TypeError, ValueError):
+            continue
+        name = position.get('name', '')
+        if sign not in sign_planets or name not in PLANET_ABBREVIATIONS:
+            continue
+        abbreviation = PLANET_ABBREVIATIONS[name]
+        if position.get('is_retrograde'):
+            abbreviation = f'{abbreviation} (R)'
+        sign_planets[sign].append(abbreviation)
+
+    rows = []
+    for row in SOUTH_INDIAN_SIGN_GRID:
+        chart_row = []
+        for sign in row:
+            if sign is None:
+                chart_row.append(None)
+            else:
+                chart_row.append(
+                    {
+                        'sign': sign,
+                        'sign_name': SIGN_NAMES[sign],
+                        'planets': sign_planets[sign],
+                    }
+                )
+        rows.append(chart_row)
+
+    return {
+        'rows': rows,
+        'has_positions': any(sign_planets.values()),
+    }
+
+
+def build_vimsottari_context(api_data):
+    parsed_response = api_data.parsed_response if isinstance(api_data.parsed_response, dict) else {}
+    rows = parsed_response.get('vimsottari_dasha_rows', [])
+    if not rows:
+        output = extract_response_output(
+            api_data,
+            'vimsottari_maha_dasas_and_antar_dasas',
+            'vimsottari_maha_dasas_and_antar_dasas',
+        )
+        rows = dasha_rows_from_output(output)
+
+    current_dasha = current_dasha_from_rows(rows)
+    groups = []
+    for row in rows:
+        maha_dasha = row.get('maha_dasha', '')
+        if not groups or groups[-1]['maha_dasha'] != maha_dasha:
+            groups.append({'maha_dasha': maha_dasha, 'periods': []})
+        row = dict(row)
+        row['is_current'] = (
+            current_dasha
+            and row.get('maha_dasha') == current_dasha.get('maha_dasha')
+            and row.get('antar_dasha') == current_dasha.get('antar_dasha')
+            and row.get('start_time') == current_dasha.get('start_time')
+        )
+        groups[-1]['periods'].append(row)
+
+    return {
+        'groups': groups,
+        'current': current_dasha,
+        'has_rows': bool(rows),
     }
 
 
@@ -181,6 +326,16 @@ def customer_update(request, pk):
 
 
 @login_required
+def customer_location_search(request):
+    query = request.GET.get('q', '').strip()
+    try:
+        results = search_geo_locations(query)
+    except FreeAstrologyAPIError as error:
+        return JsonResponse({'results': [], 'error': str(error)}, status=400)
+    return JsonResponse({'results': results})
+
+
+@login_required
 def customer_deactivate(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
     if request.method == 'POST':
@@ -198,6 +353,37 @@ def customer_deactivate(request, pk):
             'customer': customer,
         },
     )
+
+
+@login_required
+def customer_fetch_location(request, pk):
+    customer = get_object_or_404(Customer, pk=pk)
+    if request.method != 'POST':
+        return redirect('customers:customer_detail', pk=customer.pk)
+    try:
+        location = fetch_geo_details(customer)
+    except FreeAstrologyAPIError as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(
+            request,
+            f'Location fetched: {location.get("complete_name", customer.place_of_birth)}.',
+        )
+    return redirect('customers:customer_detail', pk=customer.pk)
+
+
+@login_required
+def customer_fetch_astrology_data(request, pk):
+    customer = get_object_or_404(Customer, pk=pk)
+    if request.method != 'POST':
+        return redirect('customers:customer_detail', pk=customer.pk)
+    try:
+        api_data = create_astrology_data_from_api(customer)
+    except FreeAstrologyAPIError as error:
+        messages.error(request, str(error))
+        return redirect('customers:customer_detail', pk=customer.pk)
+    messages.success(request, 'Astrology data fetched and saved successfully.')
+    return redirect('customers:api_data_detail', pk=api_data.pk)
 
 
 @login_required
@@ -250,12 +436,18 @@ def api_data_list(request):
 def api_data_detail(request, pk):
     api_data = get_object_or_404(APIData.objects.select_related('customer'), pk=pk)
     manual_entry_rows = build_api_manual_entry_rows(api_data)
+    d1_chart = build_south_indian_chart(api_data, 'd1')
+    d9_chart = build_south_indian_chart(api_data, 'd9')
+    vimsottari_dasha = build_vimsottari_context(api_data)
     return render(
         request,
         'customers/api_data_detail.html',
         {
             'page_title': 'Astrology Data',
             'api_data': api_data,
+            'd1_chart': d1_chart,
+            'd9_chart': d9_chart,
+            'vimsottari_dasha': vimsottari_dasha,
             **manual_entry_rows,
         },
     )
@@ -317,14 +509,14 @@ def api_data_deactivate(request, pk):
     if request.method == 'POST':
         api_data.is_active = False
         api_data.save(update_fields=['is_active', 'updated_at'])
-        messages.success(request, 'Astrology data record deactivated successfully.')
+        messages.success(request, 'Astrology data record deleted successfully.')
         return redirect('customers:api_data_list')
 
     return render(
         request,
         'customers/api_data_confirm_deactivate.html',
         {
-            'page_title': 'Deactivate Astrology Data',
+            'page_title': 'Delete Astrology Data',
             'api_data': api_data,
         },
     )

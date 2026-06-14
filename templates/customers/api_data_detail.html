@@ -4,6 +4,55 @@
 {% block page_title %}Astrology Data{% endblock %}
 
 {% block content %}
+<style>
+    .south-chart-wrap {
+        max-width: 430px;
+    }
+
+    .south-chart {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(72px, 1fr));
+        aspect-ratio: 1 / 1;
+        border: 2px solid #111827;
+        background: #fff;
+    }
+
+    .south-chart-cell {
+        position: relative;
+        min-height: 82px;
+        border: 1px solid #111827;
+        padding: 0.45rem;
+    }
+
+    .south-chart-cell.empty {
+        border: 0;
+    }
+
+    .south-chart-planets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        max-width: 100%;
+        color: #111827;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    .south-chart-sign {
+        position: absolute;
+        right: 0.35rem;
+        bottom: 0.25rem;
+        color: #111827;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .south-chart-sign-name {
+        color: #6c757d;
+        font-size: 0.68rem;
+    }
+</style>
+
 <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-3">
     <div>
         <h2 class="h5 mb-1">{{ api_data.customer.customer_name }}</h2>
@@ -21,6 +70,8 @@
 <section class="page-card p-4">
     <ul class="nav nav-tabs mb-4" id="api-data-detail-tabs" role="tablist">
         <li class="nav-item" role="presentation"><button class="nav-link active" id="detail-summary-tab" data-bs-toggle="tab" data-bs-target="#detail-summary-pane" type="button" role="tab">Astrology Values</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="detail-charts-tab" data-bs-toggle="tab" data-bs-target="#detail-charts-pane" type="button" role="tab">Charts</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="detail-dasha-tab" data-bs-toggle="tab" data-bs-target="#detail-dasha-pane" type="button" role="tab">Dasha</button></li>
         <li class="nav-item" role="presentation"><button class="nav-link" id="detail-record-tab" data-bs-toggle="tab" data-bs-target="#detail-record-pane" type="button" role="tab">Record Details</button></li>
         <li class="nav-item" role="presentation"><button class="nav-link" id="detail-notes-tab" data-bs-toggle="tab" data-bs-target="#detail-notes-pane" type="button" role="tab">Notes</button></li>
     </ul>
@@ -161,6 +212,185 @@
                         </tbody>
                     </table>
                 </div>
+            {% endif %}
+        </section>
+
+        <section class="tab-pane fade" id="detail-charts-pane" role="tabpanel" tabindex="0">
+            <ul class="nav nav-pills mb-3" id="api-data-chart-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="d1-chart-tab" data-bs-toggle="pill" data-bs-target="#d1-chart-pane" type="button" role="tab">D1 / Rasi</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="d9-chart-tab" data-bs-toggle="pill" data-bs-target="#d9-chart-pane" type="button" role="tab">D9 / Navamsa</button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="d1-chart-pane" role="tabpanel" tabindex="0">
+                    <div class="row g-4 align-items-start">
+                        <div class="col-lg-5">
+                            <h3 class="h6 mb-2">D1 / Rasi Chart</h3>
+                            {% if d1_chart.has_positions %}
+                                <div class="south-chart-wrap">
+                                    <div class="south-chart" aria-label="D1 South Indian chart">
+                                        {% for row in d1_chart.rows %}
+                                            {% for cell in row %}
+                                                {% if cell %}
+                                                    <div class="south-chart-cell" title="{{ cell.sign_name }}">
+                                                        <div class="south-chart-planets">
+                                                            {% for planet in cell.planets %}
+                                                                <span>{{ planet }}</span>
+                                                            {% endfor %}
+                                                        </div>
+                                                        <div class="south-chart-sign">{{ cell.sign }}</div>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="south-chart-cell empty"></div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">D1 chart positions are not available for this record.</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-lg-7">
+                            <p class="text-muted mb-2">South Indian style chart using planet sign positions saved from the API response.</p>
+                            <div class="row g-2">
+                                {% for row in d1_chart.rows %}
+                                    {% for cell in row %}
+                                        {% if cell and cell.planets %}
+                                            <div class="col-md-4">
+                                                <div class="border rounded p-2 h-100">
+                                                    <div class="small text-muted">{{ cell.sign }} - {{ cell.sign_name }}</div>
+                                                    <div class="fw-semibold">{{ cell.planets|join:", " }}</div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="d9-chart-pane" role="tabpanel" tabindex="0">
+                    <div class="row g-4 align-items-start">
+                        <div class="col-lg-5">
+                            <h3 class="h6 mb-2">D9 / Navamsa Chart</h3>
+                            {% if d9_chart.has_positions %}
+                                <div class="south-chart-wrap">
+                                    <div class="south-chart" aria-label="D9 South Indian chart">
+                                        {% for row in d9_chart.rows %}
+                                            {% for cell in row %}
+                                                {% if cell %}
+                                                    <div class="south-chart-cell" title="{{ cell.sign_name }}">
+                                                        <div class="south-chart-planets">
+                                                            {% for planet in cell.planets %}
+                                                                <span>{{ planet }}</span>
+                                                            {% endfor %}
+                                                        </div>
+                                                        <div class="south-chart-sign">{{ cell.sign }}</div>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="south-chart-cell empty"></div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">D9 chart positions are not saved for this record yet. Fetch astrology data again to call the Navamsa API.</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-lg-7">
+                            <p class="text-muted mb-2">Navamsa positions are read from the saved <code>navamsa-chart-info</code> API response.</p>
+                            <div class="row g-2">
+                                {% for row in d9_chart.rows %}
+                                    {% for cell in row %}
+                                        {% if cell and cell.planets %}
+                                            <div class="col-md-4">
+                                                <div class="border rounded p-2 h-100">
+                                                    <div class="small text-muted">{{ cell.sign }} - {{ cell.sign_name }}</div>
+                                                    <div class="fw-semibold">{{ cell.planets|join:", " }}</div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade" id="detail-dasha-pane" role="tabpanel" tabindex="0">
+            <div class="d-flex flex-column flex-lg-row gap-3 justify-content-between align-items-lg-start mb-3">
+                <div>
+                    <h3 class="h6 mb-1">Vimsottari Maha Dasha and Antar Dasha</h3>
+                    <p class="text-muted mb-0">Saved from the Free Astrology API Vimsottari endpoint.</p>
+                </div>
+                {% if vimsottari_dasha.current %}
+                    <div class="border rounded p-3 bg-light">
+                        <div class="small text-muted">Current Period</div>
+                        <div class="fw-semibold">
+                            {{ vimsottari_dasha.current.maha_dasha }} / {{ vimsottari_dasha.current.antar_dasha }}
+                        </div>
+                        <div class="small text-muted">
+                            {{ vimsottari_dasha.current.start_time }} to {{ vimsottari_dasha.current.end_time }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if vimsottari_dasha.has_rows %}
+                <div class="accordion" id="vimsottari-dasha-accordion">
+                    {% for group in vimsottari_dasha.groups %}
+                        <div class="accordion-item">
+                            <h4 class="accordion-header" id="maha-dasha-heading-{{ forloop.counter }}">
+                                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#maha-dasha-panel-{{ forloop.counter }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="maha-dasha-panel-{{ forloop.counter }}">
+                                    {{ group.maha_dasha }} Maha Dasha
+                                </button>
+                            </h4>
+                            <div id="maha-dasha-panel-{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="maha-dasha-heading-{{ forloop.counter }}" data-bs-parent="#vimsottari-dasha-accordion">
+                                <div class="accordion-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Antar Dasha</th>
+                                                    <th>Start Date</th>
+                                                    <th>End Date</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for period in group.periods %}
+                                                    <tr>
+                                                        <td class="fw-semibold">{{ period.antar_dasha }}</td>
+                                                        <td>{{ period.start_time|default:"-" }}</td>
+                                                        <td>{{ period.end_time|default:"-" }}</td>
+                                                        <td>
+                                                            {% if period.is_current %}
+                                                                <span class="badge text-bg-primary">Current</span>
+                                                            {% else %}
+                                                                <span class="text-muted">-</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">Vimsottari Dasha data is not saved for this record yet. Fetch astrology data again to call the Dasha API.</p>
             {% endif %}
         </section>
 

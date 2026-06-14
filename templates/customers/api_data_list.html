@@ -80,6 +80,9 @@
                         <td class="text-end">
                             <a class="btn btn-sm btn-outline-secondary" href="{% url 'customers:api_data_detail' record.pk %}">View</a>
                             <a class="btn btn-sm btn-outline-primary" href="{% url 'customers:api_data_update' record.pk %}">Edit</a>
+                            {% if record.is_active %}
+                                <a class="btn btn-sm btn-outline-danger" href="{% url 'customers:api_data_deactivate' record.pk %}">Delete</a>
+                            {% endif %}
                         </td>
                     </tr>
                 {% empty %}

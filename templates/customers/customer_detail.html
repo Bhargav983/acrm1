@@ -15,6 +15,14 @@
     </div>
     <div class="d-flex gap-2">
         <a class="btn btn-outline-secondary" href="{% url 'customers:customer_list' %}">Back</a>
+        <form method="post" action="{% url 'customers:customer_fetch_location' customer.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-outline-primary" type="submit">Fetch Location</button>
+        </form>
+        <form method="post" action="{% url 'customers:customer_fetch_astrology_data' customer.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-outline-primary" type="submit">Fetch Astrology Data</button>
+        </form>
         <a class="btn btn-outline-primary" href="{% url 'knowledge:research_interview_select' customer.pk %}">Start Research Interview</a>
         <a class="btn btn-primary" href="{% url 'customers:customer_update' customer.pk %}">Edit</a>
         {% if customer.is_active %}
@@ -108,6 +116,9 @@
 
         <section class="tab-pane fade" id="astrology-pane" role="tabpanel" aria-labelledby="astrology-tab" tabindex="0">
             {% if latest_api_data %}
+                <div class="d-flex justify-content-end mb-3">
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'customers:api_data_detail' latest_api_data.pk %}">View Full Astrology Data</a>
+                </div>
                 <div class="row g-3">
                     <div class="col-md-4">
                         <div class="text-muted small">Lagna</div>
@@ -143,7 +154,13 @@
                     </div>
                 </div>
             {% else %}
-                <p class="text-muted mb-0">No astrology data has been added yet.</p>
+                <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center justify-content-between">
+                    <p class="text-muted mb-0">No astrology data has been added yet.</p>
+                    <form method="post" action="{% url 'customers:customer_fetch_astrology_data' customer.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-primary" type="submit">Fetch Astrology Data</button>
+                    </form>
+                </div>
             {% endif %}
         </section>
 
